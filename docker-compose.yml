@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:15
+    platform: linux/amd64
+    container_name: repflow_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: repflow_admin
+      POSTGRES_PASSWORD: repflow_secure_password_2026
+      POSTGRES_DB: repflow_gym
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: repflow_gym_app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://repflow_admin:repflow_secure_password_2026@db:5432/repflow_gym?schema=public
+    depends_on:
+      - db
+    volumes:
+      - app_data:/app/data
+
+volumes:
+  postgres_data:
+  app_data:

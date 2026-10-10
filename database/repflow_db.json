@@ -1,0 +1,44 @@
+{
+  "gymProfile": {
+    "name": "Iron Temple Fitness",
+    "branch": "Indiranagar, Bengaluru",
+    "gstin": "29AABCI1234F1Z8",
+    "openAt": "05:30",
+    "closeAt": "22:30",
+    "capacity": 80,
+    "phone": "9845012345"
+  },
+  "billingSettings": {
+    "receiptType": "GST tax invoice",
+    "gstin": "29AABCI1234F1Z8",
+    "maxStaffDiscount": 10,
+    "autoPayDiscount": 5
+  },
+  "plans": [
+    { "id": "P1", "name": "Monthly", "days": 30, "sessions": "Standard Gym Access", "price": 1500 },
+    { "id": "P2", "name": "Quarterly", "days": 90, "sessions": "Standard Gym Access", "price": 4000 },
+    { "id": "P3", "name": "Half-yearly", "days": 180, "sessions": "Standard Gym Access", "price": 7000 },
+    { "id": "P4", "name": "Annual", "days": 365, "sessions": "Gym Access + 2 PT Sessions", "price": 12000 }
+  ],
+  "members": [],
+  "leads": [],
+  "payments": [],
+  "expenses": [],
+  "trainers": [],
+  "ptAssignments": [],
+  "staff": [
+    { "id": "S1", "name": "Gym Owner", "email": "owner@gym.com", "password": "password123", "role": "Owner", "active": true },
+    { "id": "S2", "name": "Accountant", "email": "accountant@gym.com", "password": "password123", "role": "Accountant", "active": true }
+  ],
+  "permissions": {
+    "Check in members": { "Owner": true, "Trainer": true, "Accountant": false },
+    "Add & edit members": { "Owner": true, "Trainer": false, "Accountant": false },
+    "Collect payments": { "Owner": true, "Trainer": false, "Accountant": true },
+    "Give discounts (up to ceiling)": { "Owner": true, "Trainer": false, "Accountant": false },
+    "Void a receipt": { "Owner": true, "Trainer": false, "Accountant": false },
+    "Record expenses": { "Owner": true, "Trainer": false, "Accountant": true },
+    "See revenue dashboard": { "Owner": true, "Trainer": false, "Accountant": false },
+    "Manage PT sessions": { "Owner": true, "Trainer": true, "Accountant": false }
+  },
+  "auditLog": []
+}
