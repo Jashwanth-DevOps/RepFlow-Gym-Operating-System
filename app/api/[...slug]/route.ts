@@ -10,17 +10,37 @@ export async function GET(request: Request, { params }: { params: { slug: string
     return NextResponse.json(memoryDb);
   }
 
+  // ACCURATE INVOICE GENERATOR WITH EXACT FORM BREAKDOWN
   if (endpoint.startsWith('invoices/')) {
     const invId = endpoint.split('/')[1];
-    const member = memoryDb.members.find((m: any) => m.id === invId) || {
+    const member = memoryDb.members.find((m: any) => m.id === invId) || memoryDb.members[0] || {
       id: invId,
       name: 'Valued Member',
       phone: '9845012345',
       plan: 'Quarterly',
+      basePlanAmount: 4000,
+      admissionAmount: 0,
+      ptAmount: 0,
+      discountAmount: 0,
+      discountPercent: 0,
+      calculatedTax: 0,
+      taxPercent: 18,
+      totalBill: 4000,
+      totalPaid: 4000,
+      paymentMethod: 'UPI',
       startDate: new Date().toISOString().split('T')[0],
       expires: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
       dues: 0
     };
+
+    const baseAmount = Number(member.basePlanAmount || (member.plan === 'Monthly' ? 1500 : member.plan === 'Quarterly' ? 4000 : member.plan === 'Half-yearly' ? 7000 : 12000));
+    const admAmount = Number(member.admissionAmount || 0);
+    const ptAmount = Number(member.ptAmount || 0);
+    const discount = Number(member.discountAmount || 0);
+    const tax = Number(member.calculatedTax || 0);
+    const total = Number(member.totalBill || (baseAmount + admAmount + ptAmount - discount + tax));
+    const paid = Number(member.totalPaid !== undefined ? member.totalPaid : total);
+    const dues = Number(member.dues || 0);
 
     const html = `<!DOCTYPE html>
 <html>
@@ -28,16 +48,17 @@ export async function GET(request: Request, { params }: { params: { slug: string
   <meta charset="utf-8" />
   <title>Invoice #${member.id}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #111; max-width: 700px; margin: auto; }
-    .header { border-bottom: 3px solid #84cc16; padding-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .gym-name { font-size: 24px; font-weight: 900; color: #000; }
-    .inv-tag { font-size: 14px; font-weight: bold; color: #84cc16; }
-    .details { margin: 30px 0; display: flex; justify-content: space-between; font-size: 13px; line-height: 1.6; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th { background: #f4f4f5; text-align: left; padding: 10px; border: 1px solid #ddd; font-size: 12px; }
-    td { padding: 12px 10px; border: 1px solid #eee; font-size: 13px; }
-    .total-box { text-align: right; margin-top: 20px; font-size: 16px; font-weight: bold; }
-    .print-btn { background: #84cc16; border: none; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 30px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #111; max-width: 720px; margin: auto; }
+    .header { border-bottom: 3px solid #84cc16; padding-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .gym-name { font-size: 24px; font-weight: 900; color: #000; text-transform: uppercase; }
+    .inv-tag { font-size: 14px; font-weight: 800; color: #84cc16; }
+    .details { margin: 25px 0; display: flex; justify-content: space-between; font-size: 13px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    th { background: #f4f4f5; text-align: left; padding: 10px; border: 1px solid #ddd; font-size: 11px; text-transform: uppercase; }
+    td { padding: 10px; border: 1px solid #eee; font-size: 12px; }
+    .total-box { margin-top: 15px; border-top: 2px solid #111; padding-top: 12px; font-size: 13px; line-height: 1.8; text-align: right; }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-top: 10px; }
+    .print-btn { background: #84cc16; border: none; padding: 10px 22px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 25px; }
     @media print { .print-btn { display: none; } }
   </style>
 </head>
@@ -45,47 +66,68 @@ export async function GET(request: Request, { params }: { params: { slug: string
   <div class="header">
     <div>
       <div class="gym-name">${memoryDb.gymProfile.name}</div>
-      <div style="font-size:12px; color:#555;">${memoryDb.gymProfile.branch} | Ph: ${memoryDb.gymProfile.phone}</div>
+      <div style="font-size:12px; color:#555;">${memoryDb.gymProfile.branch} | Phone: +91 ${memoryDb.gymProfile.phone}</div>
       <div style="font-size:11px; color:#777;">GSTIN: ${memoryDb.billingSettings.gstin}</div>
     </div>
     <div style="text-align:right;">
-      <div class="inv-tag">OFFICIAL RECEIPT</div>
-      <div style="font-size:12px;">#${member.id}</div>
+      <div class="inv-tag">OFFICIAL TAX INVOICE</div>
+      <div style="font-size:12px; font-weight:bold;">#${member.id}</div>
       <div style="font-size:12px;">Date: ${new Date().toLocaleDateString('en-GB')}</div>
     </div>
   </div>
 
   <div class="details">
     <div>
-      <strong>Billed To:</strong><br />
-      ${member.name}<br />
-      Ph: +91 ${member.phone}
+      <strong>BILLED TO:</strong><br />
+      <span style="font-size: 15px; font-weight: bold;">${member.name}</span><br />
+      Mobile: +91 ${member.phone}
     </div>
     <div style="text-align:right;">
-      <strong>Membership Period:</strong><br />
-      ${member.startDate} to ${member.expires}
+      <strong>MEMBERSHIP VALIDITY:</strong><br />
+      ${member.startDate} to ${member.expires}<br />
+      Plan: <strong>${member.plan}</strong>
     </div>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>Description</th>
-        <th>Duration</th>
-        <th style="text-align:right;">Amount (INR)</th>
+        <th>Item Description</th>
+        <th>Qty</th>
+        <th style="text-align:right;">Rate (INR)</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>Gym Membership (${member.plan})</td>
-        <td>Active</td>
-        <td style="text-align:right;">₹${member.plan === 'Monthly' ? 1500 : member.plan === 'Quarterly' ? 4000 : member.plan === 'Half-yearly' ? 7000 : 12000}</td>
+        <td>${member.plan} Gym Membership Access</td>
+        <td>1</td>
+        <td style="text-align:right;">₹${baseAmount}</td>
       </tr>
+      ${admAmount > 0 ? `
+      <tr>
+        <td>One-Time Gym Registration / Admission Fee</td>
+        <td>1</td>
+        <td style="text-align:right;">₹${admAmount}</td>
+      </tr>` : ''}
+      ${ptAmount > 0 ? `
+      <tr>
+        <td>Personal Training Package (${member.ptTrainer ? 'Trainer: ' + member.ptTrainer : 'Assigned Trainer'})</td>
+        <td>1</td>
+        <td style="text-align:right;">₹${ptAmount}</td>
+      </tr>` : ''}
     </tbody>
   </table>
 
   <div class="total-box">
-    Status: <span style="color: green;">PAID IN FULL</span>
+    <div>Subtotal: <strong>₹${baseAmount + admAmount + ptAmount}</strong></div>
+    ${discount > 0 ? `<div style="color: red;">Discount Applied (${member.discountPercent}\%): - ₹${discount}</div>` : ''}
+    ${tax > 0 ? `<div style="color: #666;">GST / Tax (${member.taxPercent \vert{}\vert{} 18}\%): + ₹${tax}</div>` : ''}
+    <div style="font-size: 16px; margin-top: 5px;">Grand Total: <strong>₹${total}</strong></div>
+    <div style="color: green; font-size: 14px;">Amount Paid (${member.paymentMethod || 'UPI'}): <strong>₹${paid}</strong></div>
+    ${dues > 0 ? `<div style="color: red; font-size: 14px; font-weight: bold;">Outstanding Balance Dues: ₹${dues}</div>` : ''}
+    <div class="status-badge" style="background: ${dues > 0 ? '#fef2f2; color: #dc2626;' : '#f0fdf4; color: #16a34a;'}">
+      ${dues > 0 ? 'PARTIAL PAYMENT' : 'PAID IN FULL'}
+    </div>
   </div>
 
   <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
@@ -108,6 +150,54 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     body = await request.json();
   } catch (e) {}
 
+  // 1. COMPLETE PT SESSION (-1 SESSION HANDLER)
+  if (endpoint.startsWith('pt-assign/') && endpoint.endsWith('/complete-session')) {
+    const ptId = endpoint.split('/')[1];
+    const idx = memoryDb.ptAssignments.findIndex((p: any) => p.id === ptId);
+    if (idx !== -1) {
+      if (memoryDb.ptAssignments[idx].sessions > 0) {
+        memoryDb.ptAssignments[idx].sessions = Math.max(0, memoryDb.ptAssignments[idx].sessions - 1);
+        logAudit(`Completed 1 session for ${memoryDb.ptAssignments[idx].member} (${memoryDb.ptAssignments[idx].sessions} remaining)`, body.operator || 'Trainer');
+        return NextResponse.json({ success: true, pt: memoryDb.ptAssignments[idx] });
+      }
+      return NextResponse.json({ success: false, message: 'No sessions remaining in package.' }, { status: 400 });
+    }
+    return NextResponse.json({ success: false, message: 'PT assignment not found' }, { status: 404 });
+  }
+
+  // 2. RENEW MEMBERSHIP HANDLER
+  if (endpoint.startsWith('members/') && endpoint.endsWith('/renew')) {
+    const memberId = endpoint.split('/')[1];
+    const idx = memoryDb.members.findIndex((m: any) => m.id === memberId);
+    if (idx !== -1) {
+      const current = memoryDb.members[idx];
+      memoryDb.members[idx] = {
+        ...current,
+        plan: body.plan || current.plan,
+        status: 'Active',
+        startDate: body.startDate || new Date().toISOString().split('T')[0],
+        expires: body.endDate,
+        dues: Number(body.dues || 0)
+      };
+      if (Number(body.amount || 0) > 0) {
+        memoryDb.payments.unshift({
+          receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
+          member: current.name,
+          phone: current.phone,
+          amount: Number(body.amount),
+          method: body.method || 'UPI',
+          plan: body.plan,
+          date: new Date().toISOString().split('T')[0],
+          operator: body.operator || 'Owner'
+        });
+      }
+      logAudit(`Renewed membership for ${current.name} (${current.id})`, body.operator || 'Owner');
+      return NextResponse.json({ success: true, member: memoryDb.members[idx] });
+    }
+    return NextResponse.json({ success: false, message: 'Member not found.' }, { status: 404 });
+  }
+
+  // 3. MEMBERS (SAVES COMPLETE PRICING BREAKDOWN FOR INVOICES)
   if (endpoint === 'members') {
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
     const newMember = {
@@ -119,13 +209,25 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       startDate: body.startDate,
       expires: body.expires,
       status: 'Active',
-      dues: Number(body.dues || 0)
+      dues: Number(body.dues || 0),
+      basePlanAmount: Number(body.basePlanAmount || (body.plan === 'Monthly' ? 1500 : body.plan === 'Quarterly' ? 4000 : body.plan === 'Half-yearly' ? 7000 : 12000)),
+      admissionAmount: Number(body.admissionAmount || (body.includeAdmissionFee ? 500 : 0)),
+      ptAmount: Number(body.ptAmount || (body.assignPT ? body.ptPrice || 0 : 0)),
+      ptTrainer: body.ptTrainer || '',
+      discountPercent: Number(body.discountPercent || 0),
+      discountAmount: Number(body.discountAmount || 0),
+      taxPercent: Number(body.taxPercent || (body.applyTax ? 18 : 0)),
+      calculatedTax: Number(body.calculatedTax || 0),
+      totalBill: Number(body.totalBill || (body.plan === 'Monthly' ? 1500 : body.plan === 'Quarterly' ? 4000 : body.plan === 'Half-yearly' ? 7000 : 12000)),
+      totalPaid: Number(body.totalPaid || 0),
+      paymentMethod: body.paymentMethod || 'UPI'
     };
     memoryDb.members.unshift(newMember);
     logAudit(`Added member ${newMember.name} (${newMember.id})`, body.operator || 'Owner');
     return NextResponse.json({ success: true, member: newMember });
   }
 
+  // 4. PAYMENTS
   if (endpoint === 'payments') {
     const newP = {
       receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -143,6 +245,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, payment: newP });
   }
 
+  // 5. LEADS
   if (endpoint === 'leads') {
     const newLead = {
       id: `L${memoryDb.leads.length + 1}`,
@@ -159,6 +262,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, lead: newLead });
   }
 
+  // 6. TRAINERS
   if (endpoint === 'trainers') {
     const newTr = {
       id: `TR${memoryDb.trainers.length + 1}`,
@@ -179,6 +283,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, trainer: newTr });
   }
 
+  // 7. PT ASSIGN
   if (endpoint === 'pt-assign') {
     const newPt = {
       id: `PT${memoryDb.ptAssignments.length + 1}`,
@@ -190,10 +295,25 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       endDate: body.endDate
     };
     memoryDb.ptAssignments.unshift(newPt);
+
+    memoryDb.trainers = (memoryDb.trainers || []).map((tr: any) => {
+      if (tr.name === body.trainer) {
+        return {
+          ...tr,
+          clients: (tr.clients || 0) + 1,
+          sessions: (tr.sessions || 0) + Number(body.sessions || 12),
+          sold: (tr.sold || 0) + Number(body.price || 0),
+          commission: (tr.commission || 0) + (Number(body.price || 0) * 0.15)
+        };
+      }
+      return tr;
+    });
+
     logAudit(`Assigned ${newPt.sessions} PT sessions to ${newPt.member}`, body.operator || 'Owner');
     return NextResponse.json({ success: true, pt: newPt });
   }
 
+  // 8. EXPENSES
   if (endpoint === 'expenses') {
     const newExp = {
       id: `E${memoryDb.expenses.length + 1}`,
@@ -208,6 +328,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, expense: newExp });
   }
 
+  // 9. PLANS
   if (endpoint === 'plans') {
     const newPlan = {
       id: `P${memoryDb.plans.length + 1}`,
@@ -221,6 +342,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, plan: newPlan });
   }
 
+  // 10. PROFILE & BILLING
   if (endpoint === 'settings/profile') {
     memoryDb.gymProfile = { ...memoryDb.gymProfile, ...body };
     logAudit(`Updated gym profile`, 'Owner');
@@ -249,6 +371,15 @@ export async function PUT(request: Request, { params }: { params: { slug: string
     if (idx !== -1) {
       memoryDb.members[idx] = { ...memoryDb.members[idx], ...body };
       return NextResponse.json({ success: true, member: memoryDb.members[idx] });
+    }
+  }
+
+  if (endpoint.startsWith('trainers/')) {
+    const id = endpoint.split('/')[1];
+    const idx = memoryDb.trainers.findIndex((t: any) => t.id === id);
+    if (idx !== -1) {
+      memoryDb.trainers[idx] = { ...memoryDb.trainers[idx], ...body };
+      return NextResponse.json({ success: true, trainer: memoryDb.trainers[idx] });
     }
   }
 
