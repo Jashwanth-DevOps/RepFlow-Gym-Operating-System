@@ -10,7 +10,6 @@ export async function GET(request: Request, { params }: { params: { slug: string
     return NextResponse.json(memoryDb);
   }
 
-  // ACCURATE INVOICE GENERATOR WITH EXACT FORM BREAKDOWN
   if (endpoint.startsWith('invoices/')) {
     const invId = endpoint.split('/')[1];
     const member = memoryDb.members.find((m: any) => m.id === invId) || memoryDb.members[0] || {
@@ -101,30 +100,30 @@ export async function GET(request: Request, { params }: { params: { slug: string
       <tr>
         <td>${member.plan} Gym Membership Access</td>
         <td>1</td>
-        <td style="text-align:right;">₹${baseAmount}</td>
+        <td style="text-align:right;">Rs. ${baseAmount}</td>
       </tr>
       ${admAmount > 0 ? `
       <tr>
         <td>One-Time Gym Registration / Admission Fee</td>
         <td>1</td>
-        <td style="text-align:right;">₹${admAmount}</td>
+        <td style="text-align:right;">Rs. ${admAmount}</td>
       </tr>` : ''}
       ${ptAmount > 0 ? `
       <tr>
         <td>Personal Training Package (${member.ptTrainer ? 'Trainer: ' + member.ptTrainer : 'Assigned Trainer'})</td>
         <td>1</td>
-        <td style="text-align:right;">₹${ptAmount}</td>
+        <td style="text-align:right;">Rs. ${ptAmount}</td>
       </tr>` : ''}
     </tbody>
   </table>
 
   <div class="total-box">
-    <div>Subtotal: <strong>₹${baseAmount + admAmount + ptAmount}</strong></div>
-    ${discount > 0 ? `<div style="color: red;">Discount Applied (${member.discountPercent}\%): - ₹${discount}</div>` : ''}
-    ${tax > 0 ? `<div style="color: #666;">GST / Tax (${member.taxPercent \vert{}\vert{} 18}\%): + ₹${tax}</div>` : ''}
-    <div style="font-size: 16px; margin-top: 5px;">Grand Total: <strong>₹${total}</strong></div>
-    <div style="color: green; font-size: 14px;">Amount Paid (${member.paymentMethod || 'UPI'}): <strong>₹${paid}</strong></div>
-    ${dues > 0 ? `<div style="color: red; font-size: 14px; font-weight: bold;">Outstanding Balance Dues: ₹${dues}</div>` : ''}
+    <div>Subtotal: <strong>Rs. ${baseAmount + admAmount + ptAmount}</strong></div>
+    ${discount > 0 ? `<div style="color: red;">Discount Applied (${member.discountPercent}\%): - Rs.${discount}</div>` : ''}
+    ${tax > 0 ? `<div style="color: #666;">GST / Tax (${member.taxPercent \vert{}\vert{} 18}\%): + Rs.${tax}</div>` : ''}
+    <div style="font-size: 16px; margin-top: 5px;">Grand Total: <strong>Rs. ${total}</strong></div>
+    <div style="color: green; font-size: 14px;">Amount Paid (${member.paymentMethod || 'UPI'}): <strong>Rs. ${paid}</strong></div>
+    ${dues > 0 ? `<div style="color: red; font-size: 14px; font-weight: bold;">Outstanding Balance Dues: Rs. ${dues}</div>` : ''}
     <div class="status-badge" style="background: ${dues > 0 ? '#fef2f2; color: #dc2626;' : '#f0fdf4; color: #16a34a;'}">
       ${dues > 0 ? 'PARTIAL PAYMENT' : 'PAID IN FULL'}
     </div>
@@ -150,7 +149,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     body = await request.json();
   } catch (e) {}
 
-  // 1. COMPLETE PT SESSION (-1 SESSION HANDLER)
   if (endpoint.startsWith('pt-assign/') && endpoint.endsWith('/complete-session')) {
     const ptId = endpoint.split('/')[1];
     const idx = memoryDb.ptAssignments.findIndex((p: any) => p.id === ptId);
@@ -165,7 +163,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: false, message: 'PT assignment not found' }, { status: 404 });
   }
 
-  // 2. RENEW MEMBERSHIP HANDLER
   if (endpoint.startsWith('members/') && endpoint.endsWith('/renew')) {
     const memberId = endpoint.split('/')[1];
     const idx = memoryDb.members.findIndex((m: any) => m.id === memberId);
@@ -197,7 +194,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: false, message: 'Member not found.' }, { status: 404 });
   }
 
-  // 3. MEMBERS (SAVES COMPLETE PRICING BREAKDOWN FOR INVOICES)
   if (endpoint === 'members') {
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
     const newMember = {
@@ -227,7 +223,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, member: newMember });
   }
 
-  // 4. PAYMENTS
   if (endpoint === 'payments') {
     const newP = {
       receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -245,7 +240,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, payment: newP });
   }
 
-  // 5. LEADS
   if (endpoint === 'leads') {
     const newLead = {
       id: `L${memoryDb.leads.length + 1}`,
@@ -262,7 +256,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, lead: newLead });
   }
 
-  // 6. TRAINERS
   if (endpoint === 'trainers') {
     const newTr = {
       id: `TR${memoryDb.trainers.length + 1}`,
@@ -283,7 +276,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, trainer: newTr });
   }
 
-  // 7. PT ASSIGN
   if (endpoint === 'pt-assign') {
     const newPt = {
       id: `PT${memoryDb.ptAssignments.length + 1}`,
@@ -313,7 +305,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, pt: newPt });
   }
 
-  // 8. EXPENSES
   if (endpoint === 'expenses') {
     const newExp = {
       id: `E${memoryDb.expenses.length + 1}`,
@@ -328,7 +319,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, expense: newExp });
   }
 
-  // 9. PLANS
   if (endpoint === 'plans') {
     const newPlan = {
       id: `P${memoryDb.plans.length + 1}`,
@@ -342,7 +332,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, plan: newPlan });
   }
 
-  // 10. PROFILE & BILLING
   if (endpoint === 'settings/profile') {
     memoryDb.gymProfile = { ...memoryDb.gymProfile, ...body };
     logAudit(`Updated gym profile`, 'Owner');
