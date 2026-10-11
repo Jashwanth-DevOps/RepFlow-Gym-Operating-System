@@ -1,27 +1,28 @@
 {
-"name": "repflow-gym",
-"version": "0.1.0",
-"private": true,
-"scripts": {
-"dev": "next dev",
-"build": "prisma generate && prisma db push --accept-data-loss && next build",
-"start": "next start",
-"lint": "next lint"
-},
-"dependencies": {
-"@prisma/client": "^5.20.0",
-"lucide-react": "^0.446.0",
-"next": "14.2.13",
-"react": "^18",
-"react-dom": "^18"
-},
-"devDependencies": {
-"@types/node": "^20",
-"@types/react": "^18",
-"@types/react-dom": "^18",
-"postcss": "^8",
-"prisma": "^5.20.0",
-"tailwindcss": "^3.4.1",
-"typescript": "^5"
-}
+  "name": "repflow-gym",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && prisma db push --accept-data-loss && next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "lucide-react": "^0.446.0",
+    "next": "14.2.13",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
 }
