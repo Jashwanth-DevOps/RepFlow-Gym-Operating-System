@@ -15,9 +15,7 @@
   payments: [],
   expenses: [],
   leads: [],
-  trainers: [
-    { id: 'TR1', name: 'Sameer Khan', email: 'sameer@gym.com', phone: '9876543210', specialty: 'Strength & HIIT', rating: 5.0, clients: 1, sessions: 12, sold: 6000, commission: 900 }
-  ],
+  trainers: [],
   ptAssignments: [],
   plans: [
     { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
@@ -44,3 +42,4 @@ export function logAudit(action: string, user: string = 'Owner') {
   const timeStr = `${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
   memoryDb.auditLog.unshift({ action, user, time: timeStr });
 }
+
