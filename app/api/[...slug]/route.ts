@@ -1,61 +1,15 @@
 ﻿import { NextResponse } from 'next/server';
+import { memoryDb, logAudit } from '@/lib/store';
 
-let memoryDb: any = {
-  gymProfile: {
-    name: 'Iron Temple Fitness',
-    branch: 'Indiranagar, Bengaluru',
-    phone: '9845012345',
-    publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
-  },
-  billingSettings: {
-    receiptType: 'GST tax invoice',
-    gstin: '29AABCI1234F1Z8',
-    taxPercent: 18,
-    maxStaffDiscount: 20
-  },
-  members: [],
-  payments: [],
-  expenses: [],
-  leads: [],
-  trainers: [
-    { id: 'TR1', name: 'Sameer Khan', email: 'sameer@gym.com', phone: '9876543210', specialty: 'Strength & HIIT', rating: 5.0, clients: 1, sessions: 12, sold: 6000, commission: 900 }
-  ],
-  ptAssignments: [],
-  plans: [
-    { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
-    { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
-    { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
-    { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
-  ],
-  staff: [
-    { id: 'S1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner', active: true }
-  ],
-  permissions: {
-    'See revenue dashboard': { Owner: true, Trainer: false, Accountant: true },
-    'Check in members': { Owner: true, Trainer: true, Accountant: false },
-    'Add & edit members': { Owner: true, Trainer: false, Accountant: false },
-    'Manage PT sessions': { Owner: true, Trainer: true, Accountant: false },
-    'Collect payments': { Owner: true, Trainer: false, Accountant: true },
-    'Record expenses': { Owner: true, Trainer: false, Accountant: true }
-  },
-  auditLog: []
-};
-
-function logAudit(action: string, user: string = 'Owner') {
-  const now = new Date();
-  const timeStr = `${now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
-  memoryDb.auditLog.unshift({ action, user, time: timeStr });
-}
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, { params }: { params: { slug: string[] } }) {
   const endpoint = params.slug?.join('/') || '';
 
-  // Return the direct DB object expected by page.tsx
   if (endpoint === 'data') {
     return NextResponse.json(memoryDb);
   }
 
-  // Handle invoice view & print
   if (endpoint.startsWith('invoices/')) {
     const invId = endpoint.split('/')[1];
     const member = memoryDb.members.find((m: any) => m.id === invId) || {
@@ -154,7 +108,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     body = await request.json();
   } catch (e) {}
 
-  // MEMBERS
   if (endpoint === 'members') {
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
     const newMember = {
@@ -173,7 +126,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, member: newMember });
   }
 
-  // PAYMENTS
   if (endpoint === 'payments') {
     const newP = {
       receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -191,7 +143,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, payment: newP });
   }
 
-  // LEADS
   if (endpoint === 'leads') {
     const newLead = {
       id: `L${memoryDb.leads.length + 1}`,
@@ -208,7 +159,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, lead: newLead });
   }
 
-  // TRAINERS
   if (endpoint === 'trainers') {
     const newTr = {
       id: `TR${memoryDb.trainers.length + 1}`,
@@ -229,7 +179,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, trainer: newTr });
   }
 
-  // PT ASSIGN
   if (endpoint === 'pt-assign') {
     const newPt = {
       id: `PT${memoryDb.ptAssignments.length + 1}`,
@@ -245,7 +194,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, pt: newPt });
   }
 
-  // EXPENSES
   if (endpoint === 'expenses') {
     const newExp = {
       id: `E${memoryDb.expenses.length + 1}`,
@@ -260,7 +208,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, expense: newExp });
   }
 
-  // PLANS
   if (endpoint === 'plans') {
     const newPlan = {
       id: `P${memoryDb.plans.length + 1}`,
@@ -274,14 +221,12 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, plan: newPlan });
   }
 
-  // GYM PROFILE UPDATE
   if (endpoint === 'settings/profile') {
     memoryDb.gymProfile = { ...memoryDb.gymProfile, ...body };
     logAudit(`Updated gym profile`, 'Owner');
     return NextResponse.json({ success: true, gymProfile: memoryDb.gymProfile });
   }
 
-  // BILLING SETTINGS UPDATE
   if (endpoint === 'settings/billing') {
     memoryDb.billingSettings = { ...memoryDb.billingSettings, ...body };
     logAudit(`Updated billing settings`, 'Owner');
