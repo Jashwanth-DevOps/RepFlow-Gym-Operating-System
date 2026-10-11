@@ -75,6 +75,32 @@ export async function GET(request: Request, { params }: { params: { slug: string
       tableRows += '<tr><td style="padding-left:16px;">' + sectionNum + '.1</td><td>PT Package (Trainer: ' + (ptTrainer || 'Assigned') + ')</td><td>' + ptSessions + ' sessions</td><td style="text-align:right;">₹' + ptAmount + '</td></tr>';
     }
 
+    let summary = '';
+    summary += '<div class="summary-line"><span>Membership Subtotal:</span><span>₹' + membershipSubtotal + '</span></div>';
+    if (admAmount > 0) {
+      summary += '<div class="summary-line"><span>Admission Subtotal:</span><span>₹' + admAmount + '</span></div>';
+    }
+    if (ptAmount > 0) {
+      summary += '<div class="summary-line"><span>PT Subtotal:</span><span>₹' + ptAmount + '</span></div>';
+    }
+    if (tax > 0) {
+      summary += '<div class="summary-line"><span>Tax / GST (' + taxPct + '%):</span><span>₹' + tax + '</span></div>';
+    }
+    summary += '<div class="grand-total-row"><span>GRAND TOTAL:</span><span>₹' + calculatedGrandTotal + '</span></div>';
+    summary += '<div class="paid-row"><span>Amount Received (' + payMethod + '):</span><span>₹' + paid + '</span></div>';
+    if (dues > 0) {
+      summary += '<div class="due-row"><span>BALANCE DUE:</span><span>₹' + dues + '</span></div>';
+    }
+
+    const badgeStyle = dues > 0 ? 'background: #fef2f2; color: #dc2626;' : 'background: #f0fdf4; color: #16a34a;';
+    const badgeText = dues > 0 ? 'PARTIAL PAYMENT' : 'PAID IN FULL';
+    summary += '<div class="status-badge" style="' + badgeStyle + '">' + badgeText + '</div>';
+
+    const gymName = memoryDb.gymProfile.name || 'Iron Temple Fitness';
+    const gymBranch = memoryDb.gymProfile.branch || 'Indiranagar, Bengaluru';
+    const gymPhone = memoryDb.gymProfile.phone || '9845012345';
+    const gymGstin = memoryDb.billingSettings.gstin || '29AABCI1234F1Z8';
+
     const html = '<!DOCTYPE html>' +
 '<html>' +
 '<head>' +
@@ -99,6 +125,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
 '    .grand-total-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; border-top: 2px solid #111; border-bottom: 2px solid #111; padding: 6px 0; margin: 8px 0; }' +
 '    .paid-row { display: flex; justify-content: space-between; font-weight: bold; color: #16a34a; }' +
 '    .due-row { display: flex; justify-content: space-between; font-weight: bold; color: #dc2626; }' +
+'    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-top: 10px; }' +
 '    .footer-section { margin-top: 55px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; color: #666; }' +
 '    .stamp-box { width: 160px; height: 75px; border: 1px dashed #999; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #888; text-align: center; }' +
 '    @media print { .no-print { display: none !important; } body { padding: 20px; } }' +
@@ -106,8 +133,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
 '</head>' +
 '<body>' +
 '  <div class="top-center">' +
-'    <div class="gym-title">' + (memoryDb.gymProfile.name || 'Iron Temple Fitness') + '</div>' +
-'    <div class="sub-info">Branch: ' + (memoryDb.gymProfile.branch || 'Indiranagar, Bengaluru') + ' | GSTIN: ' + (memoryDb.billingSettings.gstin || '29AABCI1234F1Z8') + ' | Phone: ' + (memoryDb.gymProfile.phone || '9845012345') + '</div>' +
+'    <div class="gym-title">' + gymName + '</div>' +
+'    <div class="sub-info">Branch: ' + gymBranch + ' | GSTIN: ' + gymGstin + ' | Phone: ' + gymPhone + '</div>' +
 '    <div class="doc-type">TAX INVOICE / RECEIPT</div>' +
 '  </div>' +
 '  <div class="green-line"></div>' +
@@ -140,13 +167,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
 '  </table>' +
 '  <div class="summary-wrap">' +
 '    <div class="summary-box">' +
-'      <div class="summary-line"><span>Membership Subtotal:</span><span>₹' + membershipSubtotal + '</span></div>' +
-'      ' + (admAmount > 0 ? '<div class="summary-line"><span>Admission Subtotal:</span><span>₹' + admAmount + '</span></div>' : '') +
-'      ' + (ptAmount > 0 ? '<div class="summary-line"><span>PT Subtotal:</span><span>₹' + ptAmount + '</span></div>' : '') +
-'      ' + (tax > 0 ? '<div class="summary-line"><span>Tax / GST (' + taxPct + '%):</span><span>₹' + tax + '</span></div>' : '') +
-'      '<div class="grand-total-row"><span>GRAND TOTAL:</span><span>₹' + calculatedGrandTotal + '</span></div>' +
-'      <div class="paid-row"><span>Amount Received (' + payMethod + '):</span><span>₹' + paid + '</span></div>' +
-'      ' + (dues > 0 ? '<div class="due-row"><span>BALANCE DUE:</span><span>₹' + dues + '</span></div>' : '') +
+'      ' + summary +
 '    </div>' +
 '  </div>' +
 '  <div class="footer-section">' +
