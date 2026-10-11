@@ -88,7 +88,7 @@ model Member {
   gymId         String
   gym           Gym          @relation(fields: [gymId], references: [id], onDelete: Cascade)
   name          String
-  phone         String
+  phone         String @unique
   gender        String
   status        MemberStatus @default(ACTIVE)
   planId        String
