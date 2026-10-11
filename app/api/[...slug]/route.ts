@@ -1,5 +1,5 @@
 ﻿import { NextResponse } from 'next/server';
-import { memoryDb, logAudit } from '@/lib/store';
+import { memoryDb, logAudit } from '../../../lib/store';
 
 export const dynamic = 'force-dynamic';
 
