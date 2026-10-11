@@ -1,10 +1,10 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+﻿generator client {
+provider = "prisma-client-js"
 }
 
-generator client {
-  provider = "prisma-client-js"
+datasource db {
+provider = "postgresql"
+url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -15,145 +15,71 @@ ACCOUNTANT
 STAFF
 }
 
+enum PlanType {
+MONTHLY
+QUARTERLY
+HALF_YEARLY
+ANNUAL
+}
+
 enum MemberStatus {
-  ACTIVE
-  EXPIRING
-  EXPIRED
-  LAPSED
-  FROZEN
-  CANCELLED
-}
-
-enum LeadStage {
-  NEW
-  CONTACTED
-  TRIAL
-  NEGOTIATING
-  CONVERTED
-  LOST
-}
-
-model Gym {
-  id              String    @id @default(uuid())
-  slug            String    @unique
-  name            String
-  branch          String
-  gstin           String?
-  phone           String
-  openAt          String    @default("05:30")
-  closeAt         String    @default("22:30")
-  capacity        Int       @default(80)
-  createdAt       DateTime  @default(now())
-
-  users           User[]
-  members         Member[]
-  plans           Plan[]
-  leads           Lead[]
-  expenses        Expense[]
+ACTIVE
+INACTIVE
+EXPIRED
 }
 
 model User {
-  id             String    @id @default(uuid())
-  gymId          String
-  gym            Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  name           String
-  email          String    @unique
-  phone          String?
-  passwordHash   String
-  role           Role
-  createdAt      DateTime  @default(now())
-
-  specialty      String?
-  rating         Float     @default(5.0)
-  commissionRate Float     @default(0.15)
-  ptAssignments  PtAssignment[]
-}
-
-model Plan {
-  id            String    @id @default(uuid())
-  gymId         String
-  gym           Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  name          String
-  durationDays  Int
-  sessions      String    @default("Standard")
-  price         Decimal   @db.Decimal(10, 2)
-  createdAt     DateTime  @default(now())
-
-  members       Member[]
+id        String   @id @default(cuid())
+email     String   @unique
+name      String?
+password  String
+role      Role     @default(STAFF)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 }
 
 model Member {
-  id            String       @id @default(uuid())
-  memberCode    String       @unique
-  gymId         String
-  gym           Gym          @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  name          String
-  phone         String @unique
-  gender        String
-  status        MemberStatus @default(ACTIVE)
-  planId        String
-  plan          Plan         @relation(fields: [planId], references: [id])
-  startDate     DateTime
-  endDate       DateTime
-  dues          Decimal      @default(0.00) @db.Decimal(10, 2)
-  createdAt     DateTime     @default(now())
-
-  payments      Payment[]
-  ptAssignments PtAssignment[]
-  checkIns      CheckIn[]
+id        String   @id @default(cuid())
+name      String
+phone     String
+gender    String?
+plan      String
+startDate String
+expires   String
+status    String   @default("Active")
+dues      Float    @default(0)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 }
 
 model Payment {
-  id          String    @id @default(uuid())
-  receiptNo   String    @unique
-  memberId    String
-  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  amount      Decimal   @db.Decimal(10, 2)
-  category    String    @default("Membership")
-  method      String    @default("UPI")
-  date        DateTime  @default(now())
-  operator    String
+id        String   @id @default(cuid())
+receipt   String   @unique
+member    String
+phone     String
+amount    Float
+method    String
+plan      String
+note      String?
+date      String
+createdAt DateTime @default(now())
 }
 
 model Expense {
-  id          String    @id @default(uuid())
-  gymId       String
-  gym         Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  category    String
-  paidTo      String
-  amount      Decimal   @db.Decimal(10, 2)
-  method      String    @default("UPI")
-  date        DateTime  @default(now())
+id        String   @id @default(cuid())
+category  String
+paidTo    String
+amount    Float
+method    String
+date      String
+createdAt DateTime @default(now())
 }
 
-model Lead {
-  id          String    @id @default(uuid())
-  gymId       String
-  gym         Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
-  name        String
-  phone       String
-  source      String
-  note        String?
-  stage       LeadStage @default(NEW)
-  createdAt   DateTime  @default(now())
-}
-
-model PtAssignment {
-  id          String    @id @default(uuid())
-  trainerId   String
-  trainer     User      @relation(fields: [trainerId], references: [id], onDelete: Cascade)
-  memberId    String
-  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  sessions    Int       @default(12)
-  price       Decimal   @db.Decimal(10, 2)
-  startDate   DateTime
-  endDate     DateTime
-  createdAt   DateTime  @default(now())
-}
-
-model CheckIn {
-  id          String    @id @default(uuid())
-  memberId    String
-  member      Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  timestamp   DateTime  @default(now())
+model GymProfile {
+id        String   @id @default(cuid())
+name      String   @default("Iron Temple Fitness")
+branch    String   @default("Indiranagar, Bengaluru")
+phone     String   @default("9845012345")
+publicUrl String   @default("https://rep-flow-gym-operating-system-4o78.vercel.app")
+gstin     String?  @default("29AABCI1234F1Z8")
 }
