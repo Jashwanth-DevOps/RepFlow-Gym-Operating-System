@@ -8,6 +8,8 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@neon/config": "^1.8.6",
+    "@neon/env": "^1.5.3",
     "@prisma/client": "^5.18.0",
     "express": "^4.19.2",
     "lucide-react": "^0.436.0",
