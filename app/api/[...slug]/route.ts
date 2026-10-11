@@ -5,7 +5,7 @@ let memoryDb: any = {
     name: 'Iron Temple Fitness',
     branch: 'Indiranagar, Bengaluru',
     phone: '9845012345',
-    publicUrl: ''
+    publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
   },
   billingSettings: {
     receiptType: 'GST tax invoice',
@@ -49,10 +49,102 @@ function logAudit(action: string, user: string = 'Owner') {
 
 export async function GET(request: Request, { params }: { params: { slug: string[] } }) {
   const endpoint = params.slug?.join('/') || '';
+
+  // Return the direct DB object expected by page.tsx
   if (endpoint === 'data') {
     return NextResponse.json(memoryDb);
   }
-  return NextResponse.json({ success: true, data: memoryDb });
+
+  // Handle invoice view & print
+  if (endpoint.startsWith('invoices/')) {
+    const invId = endpoint.split('/')[1];
+    const member = memoryDb.members.find((m: any) => m.id === invId) || {
+      id: invId,
+      name: 'Valued Member',
+      phone: '9845012345',
+      plan: 'Quarterly',
+      startDate: new Date().toISOString().split('T')[0],
+      expires: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+      dues: 0
+    };
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Invoice #${member.id}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #111; max-width: 700px; margin: auto; }
+    .header { border-bottom: 3px solid #84cc16; padding-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .gym-name { font-size: 24px; font-weight: 900; color: #000; }
+    .inv-tag { font-size: 14px; font-weight: bold; color: #84cc16; }
+    .details { margin: 30px 0; display: flex; justify-content: space-between; font-size: 13px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th { background: #f4f4f5; text-align: left; padding: 10px; border: 1px solid #ddd; font-size: 12px; }
+    td { padding: 12px 10px; border: 1px solid #eee; font-size: 13px; }
+    .total-box { text-align: right; margin-top: 20px; font-size: 16px; font-weight: bold; }
+    .print-btn { background: #84cc16; border: none; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 30px; }
+    @media print { .print-btn { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="gym-name">${memoryDb.gymProfile.name}</div>
+      <div style="font-size:12px; color:#555;">${memoryDb.gymProfile.branch} | Ph: ${memoryDb.gymProfile.phone}</div>
+      <div style="font-size:11px; color:#777;">GSTIN: ${memoryDb.billingSettings.gstin}</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="inv-tag">OFFICIAL RECEIPT</div>
+      <div style="font-size:12px;">#${member.id}</div>
+      <div style="font-size:12px;">Date: ${new Date().toLocaleDateString('en-GB')}</div>
+    </div>
+  </div>
+
+  <div class="details">
+    <div>
+      <strong>Billed To:</strong><br />
+      ${member.name}<br />
+      Ph: +91 ${member.phone}
+    </div>
+    <div style="text-align:right;">
+      <strong>Membership Period:</strong><br />
+      ${member.startDate} to ${member.expires}
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Duration</th>
+        <th style="text-align:right;">Amount (INR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Gym Membership (${member.plan})</td>
+        <td>Active</td>
+        <td style="text-align:right;">₹${member.plan === 'Monthly' ? 1500 : member.plan === 'Quarterly' ? 4000 : member.plan === 'Half-yearly' ? 7000 : 12000}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="total-box">
+    Status: <span style="color: green;">PAID IN FULL</span>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">Print / Save PDF</button>
+  <script>window.onload = function() { setTimeout(function(){ window.print(); }, 400); };</script>
+</body>
+</html>`;
+
+    return new Response(html, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
+  }
+
+  return NextResponse.json(memoryDb);
 }
 
 export async function POST(request: Request, { params }: { params: { slug: string[] } }) {
@@ -62,6 +154,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     body = await request.json();
   } catch (e) {}
 
+  // MEMBERS
   if (endpoint === 'members') {
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
     const newMember = {
@@ -80,6 +173,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, member: newMember });
   }
 
+  // PAYMENTS
   if (endpoint === 'payments') {
     const newP = {
       receipt: `RCPT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -97,6 +191,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, payment: newP });
   }
 
+  // LEADS
   if (endpoint === 'leads') {
     const newLead = {
       id: `L${memoryDb.leads.length + 1}`,
@@ -113,6 +208,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, lead: newLead });
   }
 
+  // TRAINERS
   if (endpoint === 'trainers') {
     const newTr = {
       id: `TR${memoryDb.trainers.length + 1}`,
@@ -133,6 +229,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, trainer: newTr });
   }
 
+  // PT ASSIGN
   if (endpoint === 'pt-assign') {
     const newPt = {
       id: `PT${memoryDb.ptAssignments.length + 1}`,
@@ -148,6 +245,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, pt: newPt });
   }
 
+  // EXPENSES
   if (endpoint === 'expenses') {
     const newExp = {
       id: `E${memoryDb.expenses.length + 1}`,
@@ -162,6 +260,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, expense: newExp });
   }
 
+  // PLANS
   if (endpoint === 'plans') {
     const newPlan = {
       id: `P${memoryDb.plans.length + 1}`,
@@ -175,12 +274,14 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, plan: newPlan });
   }
 
+  // GYM PROFILE UPDATE
   if (endpoint === 'settings/profile') {
     memoryDb.gymProfile = { ...memoryDb.gymProfile, ...body };
     logAudit(`Updated gym profile`, 'Owner');
     return NextResponse.json({ success: true, gymProfile: memoryDb.gymProfile });
   }
 
+  // BILLING SETTINGS UPDATE
   if (endpoint === 'settings/billing') {
     memoryDb.billingSettings = { ...memoryDb.billingSettings, ...body };
     logAudit(`Updated billing settings`, 'Owner');
