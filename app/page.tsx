@@ -2726,7 +2726,41 @@ export default function RepFlowApp() {
                               key={role} 
                               className="p-2.5 sm:p-3 text-center font-bold"
                             >
-                              {dbData?.permissions[action]?.[role] ? <span className="text-[#84cc16]">✓</span> : <span className="text-neutral-500">—</span>}
+                              {(() => {
+                        const isAllowed = !!dbData?.permissions?.[action]?.[role];
+                        return (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const nextVal = !isAllowed;
+                              setDbData((prev: any) => ({
+                                ...prev,
+                                permissions: {
+                                  ...prev?.permissions,
+                                  [action]: {
+                                    ...(prev?.permissions?.[action] || {}),
+                                    [role]: nextVal
+                                  }
+                                }
+                              }));
+                              await fetch('/api/permissions', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action, role, value: nextVal })
+                              });
+                            }}
+                            className={`px-2.5 py-1 rounded text-xs font-bold transition border ${
+                              isAllowed
+                                ? 'bg-[#84cc16]/10 text-[#84cc16] border-[#84cc16]/40 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30'
+                                : 'bg-neutral-800/40 text-neutral-500 border-neutral-700 hover:bg-[#84cc16]/10 hover:text-[#84cc16] hover:border-[#84cc16]/30'
+                            }`}
+                            title={`Click to toggle ${action} for ${role}`}
+                          >
+                            {isAllowed ? '✓ Allowed' : '— Denied'}
+                          </button>
+                        );
+                      })()}
                             </td>
                           ))}
                         </tr>
