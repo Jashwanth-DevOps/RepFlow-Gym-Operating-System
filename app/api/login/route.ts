@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -26,11 +27,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Accepts bcrypt hash or fallback plaintext for local/initial setups
     const isValid =
-      user.password === password ||
-      user.password.startsWith('$2a$') ||
-      user.password.startsWith('$2b$');
+      user.passwordHash === password ||
+      (await bcrypt.compare(password, user.passwordHash).catch(() => false)) ||
+      user.passwordHash.startsWith('$2a$') ||
+      user.passwordHash.startsWith('$2b$');
 
     if (!isValid) {
       return NextResponse.json(
@@ -39,7 +40,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return user session data
     return NextResponse.json({
       success: true,
       user: {
