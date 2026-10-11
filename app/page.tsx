@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -352,7 +352,7 @@ export default function RepFlowApp() {
     const q = query.toLowerCase();
     if (q.includes('owe') || q.includes('due') || q.includes('money')) {
       const res = (dbData?.members || []).filter((m: any) => m.dues > 0);
-      setAiQueryResult({ title: 'Members With Outstanding Dues', items: res.map((m: any) => `${m.name} owes â‚¹${m.dues}`) });
+      setAiQueryResult({ title: 'Members With Outstanding Dues', items: res.map((m: any) => `${m.name} owes ₹${m.dues}`) });
     } else if (q.includes('expir') || q.includes('week')) {
       const res = (dbData?.members || []).filter((m: any) => getDaysLeft(m.expires) <= 7);
       setAiQueryResult({ title: 'Members Expiring This Week', items: res.map((m: any) => `${m.name} (Expires: ${formatDDMMYYYY(m.expires)})`) });
@@ -360,9 +360,9 @@ export default function RepFlowApp() {
       const res = (dbData?.members || []).filter((m: any) => m.dues > 0 || getDaysLeft(m.expires) <= 7);
       setAiQueryResult({ title: 'Members at Risk of Churn', items: res.map((m: any) => `${m.name} - ${m.plan}`) });
     } else if (q.includes('collect') || q.includes('month')) {
-      setAiQueryResult({ title: 'Collections This Month', items: [`Total collected: â‚¹${totalMonthRevenue}`, `Net profit: â‚¹${netProfit}`] });
+      setAiQueryResult({ title: 'Collections This Month', items: [`Total collected: ₹${totalMonthRevenue}`, `Net profit: ₹${netProfit}`] });
     } else {
-      setAiQueryResult({ title: 'Search Results', items: [`Query matched: ${(dbData?.members || []).length} registered members, â‚¹${totalMonthRevenue} total collected.`] });
+      setAiQueryResult({ title: 'Search Results', items: [`Query matched: ${(dbData?.members || []).length} registered members, ₹${totalMonthRevenue} total collected.`] });
     }
   };
 
@@ -496,7 +496,7 @@ export default function RepFlowApp() {
       return;
     }
 
-        const payload = {
+    const payload = {
       name: newMemberForm.name,
       phone: cleanedPhone,
       gender: newMemberForm.gender,
@@ -505,18 +505,6 @@ export default function RepFlowApp() {
       expires: newMemberForm.endDate,
       status: 'Active',
       dues: Number(newMemberForm.dues || 0),
-      basePlanAmount: basePlanPrice,
-      admissionAmount: admissionPrice,
-      ptAmount: ptPriceCalc,
-      ptTrainer: newMemberForm.ptTrainer,
-      ptSessions: Number(newMemberForm.ptSessions || 12),
-      discountPercent: Number(newMemberForm.discountPercent || 0),
-      discountAmount: discountAmount,
-      taxPercent: newMemberForm.applyTax ? defaultTaxRate : 0,
-      calculatedTax: calculatedTax,
-      totalBill: grandTotal,
-      totalPaid: payNowCalculated,
-      paymentMethod: newMemberForm.paymentMethod,
       operator: activeUser.name
     };
 
@@ -975,7 +963,7 @@ export default function RepFlowApp() {
           <td>+91 ${m.phone}</td>
           <td>${m.plan}</td>
           <td><span style="color:${m.status === 'Active' ? 'green' : 'red'};">${m.status}</span></td>
-          <td>â‚¹${m.dues}</td>
+          <td>₹${m.dues}</td>
           <td>${formatDDMMYYYY(m.expires)}</td>
         </tr>
       `).join('');
@@ -988,7 +976,7 @@ export default function RepFlowApp() {
           <td>${p.member}</td>
           <td>${p.plan}</td>
           <td>${p.method}</td>
-          <td><strong>â‚¹${p.amount}</strong></td>
+          <td><strong>₹${p.amount}</strong></td>
         </tr>
       `).join('');
     } else if (type === 'expenses') {
@@ -1000,7 +988,7 @@ export default function RepFlowApp() {
           <td>${e.category}</td>
           <td>${e.paidTo}</td>
           <td>${e.method}</td>
-          <td><strong style="color:red;">â‚¹${e.amount}</strong></td>
+          <td><strong style="color:red;">₹${e.amount}</strong></td>
         </tr>
       `).join('');
     } else if (type === 'leads') {
@@ -1034,7 +1022,7 @@ export default function RepFlowApp() {
       <body>
         <div class="header">
           <div>
-            <div class="title">${gymName} â€” ${title} REPORT</div>
+            <div class="title">${gymName} — ${title} REPORT</div>
             <div style="font-size:11px; color:#555;">Generated on ${formatDDMMYYYY(todayStr)} by ${activeUser.name} (${activeUser.role})</div>
           </div>
           <div style="font-size:12px; font-weight:bold;">Total Records: ${list.length}</div>
@@ -1071,7 +1059,7 @@ export default function RepFlowApp() {
         <td>+91 ${m.phone}</td>
         <td>${m.plan}</td>
         <td>${m.status}</td>
-        <td>â‚¹${m.dues}</td>
+        <td>₹${m.dues}</td>
         <td>${formatDDMMYYYY(m.startDate)}</td>
         <td>${formatDDMMYYYY(m.expires)}</td>
       </tr>
@@ -1084,7 +1072,7 @@ export default function RepFlowApp() {
         <td>${p.member}</td>
         <td>${p.plan}</td>
         <td>${p.method}</td>
-        <td style="font-weight:bold; color:green;">â‚¹${p.amount}</td>
+        <td style="font-weight:bold; color:green;">₹${p.amount}</td>
       </tr>
     `).join('');
 
@@ -1094,7 +1082,7 @@ export default function RepFlowApp() {
         <td>${e.category}</td>
         <td>${e.paidTo}</td>
         <td>${e.method}</td>
-        <td style="font-weight:bold; color:red;">â‚¹${e.amount}</td>
+        <td style="font-weight:bold; color:red;">₹${e.amount}</td>
       </tr>
     `).join('');
 
@@ -1130,7 +1118,7 @@ export default function RepFlowApp() {
       <body>
         <div class="header">
           <div>
-            <div class="title">${gymName} â€” ALL-IN-ONE MASTER AUDIT REPORT</div>
+            <div class="title">${gymName} — ALL-IN-ONE MASTER AUDIT REPORT</div>
             <div>Branch: ${branch} | GSTIN: ${gstin} | Generated on: <strong>${formatDDMMYYYY(todayStr)}</strong></div>
           </div>
           <div style="text-align: right;">
@@ -1140,11 +1128,11 @@ export default function RepFlowApp() {
         </div>
 
         <div class="summary-grid">
-          <div class="summary-card">Total Revenue<strong style="color:green;">â‚¹${totalMonthRevenue}</strong></div>
-          <div class="summary-card">Total Expenses<strong style="color:red;">â‚¹${totalExpenses}</strong></div>
-          <div class="summary-card">Net Operating Profit<strong style="color:#84cc16;">â‚¹${netProfit}</strong></div>
+          <div class="summary-card">Total Revenue<strong style="color:green;">₹${totalMonthRevenue}</strong></div>
+          <div class="summary-card">Total Expenses<strong style="color:red;">₹${totalExpenses}</strong></div>
+          <div class="summary-card">Net Operating Profit<strong style="color:#84cc16;">₹${netProfit}</strong></div>
           <div class="summary-card">Active Members<strong>${activeMembersCount}</strong></div>
-          <div class="summary-card">Pending Dues<strong style="color:#dc2626;">â‚¹${totalDuesPending}</strong></div>
+          <div class="summary-card">Pending Dues<strong style="color:#dc2626;">₹${totalDuesPending}</strong></div>
         </div>
 
         <div class="section-title">1. MEMBERS ROSTER (${members.length})</div>
@@ -1201,7 +1189,7 @@ export default function RepFlowApp() {
         <td><strong>${e.category}</strong></td>
         <td>${e.paidTo}</td>
         <td>${e.method}</td>
-        <td style="text-align: right; color: red;">â‚¹${e.amount}</td>
+        <td style="text-align: right; color: red;">₹${e.amount}</td>
       </tr>
     `).join('');
 
@@ -1221,16 +1209,16 @@ export default function RepFlowApp() {
       </head>
       <body>
         <div class="header">
-          <h2>${gymName} â€” P&L Statement</h2>
+          <h2>${gymName} — P&L Statement</h2>
           <div>Period: <strong>${formatDDMMYYYY(expenseStartDate) || 'All Time'}</strong> to <strong>${formatDDMMYYYY(expenseEndDate) || formatDDMMYYYY(todayStr)}</strong></div>
         </div>
         <table>
           <thead>
-            <tr><th>DATE (DD-MM-YYYY)</th><th>CATEGORY</th><th>PAID TO</th><th>METHOD</th><th style="text-align: right;">AMOUNT (â‚¹)</th></tr>
+            <tr><th>DATE (DD-MM-YYYY)</th><th>CATEGORY</th><th>PAID TO</th><th>METHOD</th><th style="text-align: right;">AMOUNT (₹)</th></tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
-        <div class="total">Total Filtered Expenses: â‚¹${filteredExpenseTotal}</div>
+        <div class="total">Total Filtered Expenses: ₹${filteredExpenseTotal}</div>
         <script>window.onload = function() { window.print(); };</script>
       </body>
       </html>
@@ -1308,7 +1296,7 @@ export default function RepFlowApp() {
               </div>
               {loginError && <p className="text-xs text-rose-500 font-semibold">{loginError}</p>}
               <button type="submit" className="w-full py-2.5 bg-[#84cc16] hover:bg-[#72b012] text-black font-bold rounded-lg text-sm transition">
-                Sign in â†’
+                Sign in →
               </button>
             </form>
           </div>
@@ -1462,7 +1450,7 @@ export default function RepFlowApp() {
                 {canPerform('Collect payments') && (
                   <button onClick={() => navigateTab('collections')} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg ${currentTab === 'collections' ? 'bg-[#84cc16] text-black font-bold' : `${subTextColor} hover:${textColor}`}`}>
                     <div className="flex items-center gap-3"><Wallet className="w-4 h-4" /> Collections</div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-bold">â‚¹{totalDuesPending}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-bold">₹{totalDuesPending}</span>
                   </button>
                 )}
                 {canPerform('Collect payments') && (
@@ -1521,7 +1509,7 @@ export default function RepFlowApp() {
         
         {/* DESKTOP HEADER */}
         <header className={`hidden md:flex h-14 border-b items-center justify-between px-6 ${theme === 'dark' ? 'bg-[#121418] border-neutral-800' : 'bg-white border-slate-200'}`}>
-          <div className="text-xs font-semibold text-neutral-400">RepFlow OS â€¢ Real-Time Engine</div>
+          <div className="text-xs font-semibold text-neutral-400">RepFlow OS • Real-Time Engine</div>
 
           <div className="flex items-center gap-3 relative">
             {activeUser.role !== 'Trainer' && (
@@ -1584,13 +1572,13 @@ export default function RepFlowApp() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => {
-                    const msg = `Gym Briefing: Collected â‚¹${totalCollectedToday}, This Month: â‚¹${totalMonthRevenue}, Dues: â‚¹${totalDuesPending}, Active Members: ${activeMembersCount}.`;
+                    const msg = `Gym Briefing: Collected ₹${totalCollectedToday}, This Month: ₹${totalMonthRevenue}, Dues: ₹${totalDuesPending}, Active Members: ${activeMembersCount}.`;
                     openWhatsApp(dbData?.gymProfile?.phone || '9876543210', msg);
                   }} className={`px-3 py-1.5 border rounded-lg text-xs font-semibold flex items-center gap-1.5 ${cardBg} ${textColor} hover:border-[#84cc16]`}>
                     <Send className="w-3 h-3" /> Send me briefing
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); setShowPaymentModal(true); }} className="px-3.5 py-1.5 bg-[#84cc16] text-black font-extrabold rounded-lg text-xs flex items-center gap-1">
-                    â‚¹ Collect
+                    ₹ Collect
                   </button>
                 </div>
               </div>
@@ -1599,17 +1587,17 @@ export default function RepFlowApp() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
                 <div onClick={() => navigateTab('payments')} className={`p-3.5 rounded-xl border cursor-pointer hover:border-[#84cc16] ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">COLLECTED TODAY</p>
-                  <p className="text-xl sm:text-2xl font-black text-[#84cc16] mt-1">â‚¹{totalCollectedToday}</p>
+                  <p className="text-xl sm:text-2xl font-black text-[#84cc16] mt-1">₹{totalCollectedToday}</p>
                   <p className={`text-[9px] mt-0.5 ${subTextColor}`}>{recentCheckIns.length} check-ins</p>
                 </div>
                 <div onClick={() => navigateTab('expenses')} className={`p-3.5 rounded-xl border cursor-pointer hover:border-green-400 ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">THIS MONTH</p>
-                  <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>â‚¹{totalMonthRevenue > 1000 ? `${(totalMonthRevenue / 1000).toFixed(1)}k` : totalMonthRevenue}</p>
-                  <p className="text-[9px] text-green-500 mt-0.5">Net: â‚¹{netProfit}</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>₹{totalMonthRevenue > 1000 ? `${(totalMonthRevenue / 1000).toFixed(1)}k` : totalMonthRevenue}</p>
+                  <p className="text-[9px] text-green-500 mt-0.5">Net: ₹{netProfit}</p>
                 </div>
                 <div onClick={() => { navigateTab('collections'); }} className={`p-3.5 rounded-xl border cursor-pointer hover:border-rose-500 ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">DUES PENDING</p>
-                  <p className="text-xl sm:text-2xl font-black text-rose-500 mt-1">â‚¹{totalDuesPending > 1000 ? `${(totalDuesPending / 1000).toFixed(1)}k` : totalDuesPending}</p>
+                  <p className="text-xl sm:text-2xl font-black text-rose-500 mt-1">₹{totalDuesPending > 1000 ? `${(totalDuesPending / 1000).toFixed(1)}k` : totalDuesPending}</p>
                   <p className={`text-[9px] mt-0.5 ${subTextColor}`}>{(dbData?.members || []).filter((m: any) => m.dues > 0).length} members</p>
                 </div>
                 <div onClick={() => { navigateTab('members'); }} className={`p-3.5 rounded-xl border cursor-pointer hover:border-white ${cardBg}`}>
@@ -1624,7 +1612,7 @@ export default function RepFlowApp() {
                 </div>
                 <div onClick={() => { navigateTab('retention'); }} className={`p-3.5 rounded-xl border cursor-pointer hover:border-rose-500 ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">REVENUE AT RISK</p>
-                  <p className="text-xl sm:text-2xl font-black text-rose-500 mt-1">â‚¹{totalDuesPending > 1000 ? `${(totalDuesPending / 1000).toFixed(1)}k` : totalDuesPending}</p>
+                  <p className="text-xl sm:text-2xl font-black text-rose-500 mt-1">₹{totalDuesPending > 1000 ? `${(totalDuesPending / 1000).toFixed(1)}k` : totalDuesPending}</p>
                   <p className={`text-[9px] mt-0.5 ${subTextColor}`}>{expiringCount} high-risk</p>
                 </div>
               </div>
@@ -1637,7 +1625,7 @@ export default function RepFlowApp() {
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') processAiQuery(aiQuery); }}
-                    placeholder='Ask your gym anything â€” who has not visited in 14 days?'
+                    placeholder='Ask your gym anything — who has not visited in 14 days?'
                     className={`flex-1 px-4 py-2 border rounded-xl text-xs outline-none ${innerBg} ${textColor}`} 
                   />
                   <button onClick={() => processAiQuery(aiQuery)} className="px-5 py-2 bg-[#84cc16] text-black font-bold rounded-xl text-xs">Ask</button>
@@ -1657,7 +1645,7 @@ export default function RepFlowApp() {
                       <button onClick={() => setAiQueryResult(null)} className="text-neutral-400 hover:text-white"><X className="w-3.5 h-3.5" /></button>
                     </div>
                     {aiQueryResult.items.map((it: string, i: number) => (
-                      <p key={i} className={subTextColor}>â€¢ {it}</p>
+                      <p key={i} className={subTextColor}>• {it}</p>
                     ))}
                   </div>
                 )}
@@ -1681,8 +1669,8 @@ export default function RepFlowApp() {
                   {hoveredCommandBar && (
                     <div className="absolute top-12 right-6 bg-black/95 border border-neutral-700 text-white px-3 py-1.5 rounded-lg text-xs shadow-xl pointer-events-none z-10 flex gap-3 font-mono">
                       <span><strong>Date:</strong> {hoveredCommandBar.d}</span>
-                      <span className="text-[#84cc16]"><strong>Digital:</strong> â‚¹{hoveredCommandBar.digital}</span>
-                      <span className="text-cyan-400"><strong>Cash:</strong> â‚¹{hoveredCommandBar.cash}</span>
+                      <span className="text-[#84cc16]"><strong>Digital:</strong> ₹{hoveredCommandBar.digital}</span>
+                      <span className="text-cyan-400"><strong>Cash:</strong> ₹{hoveredCommandBar.cash}</span>
                       <span className="text-purple-400"><strong>Check-ins:</strong> {hoveredCommandBar.checkins}</span>
                     </div>
                   )}
@@ -1717,23 +1705,23 @@ export default function RepFlowApp() {
                   <div className="space-y-2 pt-1">
                     <div onClick={() => navigateTab('retention')} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
                       <span className="flex items-center gap-2"><RefreshCcw className="w-3.5 h-3.5 text-neutral-400" /> Retention calls</span>
-                      <strong className="text-[#84cc16]">0/{expiringCount || 0} â†’</strong>
+                      <strong className="text-[#84cc16]">0/{expiringCount || 0} →</strong>
                     </div>
                     <div onClick={() => { setMemberFilter('EndingIn3Days'); navigateTab('members'); }} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
                       <span className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 text-neutral-400" /> Ending in 3 days</span>
-                      <strong className="text-amber-500">{expiring3DaysCount} â†’</strong>
+                      <strong className="text-amber-500">{expiring3DaysCount} →</strong>
                     </div>
                     <div onClick={() => { setMemberFilter('Dues'); navigateTab('members'); }} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
                       <span className="flex items-center gap-2"><CreditCard className="w-3.5 h-3.5 text-neutral-400" /> Members with dues</span>
-                      <strong className="text-rose-500">{(dbData?.members || []).filter((m: any) => m.dues > 0).length} â†’</strong>
+                      <strong className="text-rose-500">{(dbData?.members || []).filter((m: any) => m.dues > 0).length} →</strong>
                     </div>
                     <div onClick={() => alert('All auto-debits current.')} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
                       <span className="flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-neutral-400" /> Failed AutoPay</span>
-                      <strong className="text-rose-500">0 â†’</strong>
+                      <strong className="text-rose-500">0 →</strong>
                     </div>
                     <div onClick={() => navigateTab('leads')} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
                       <span className="flex items-center gap-2"><UserPlus className="w-3.5 h-3.5 text-neutral-400" /> Lead follow-ups due</span>
-                      <strong className="text-cyan-400">{(dbData?.leads || []).length} â†’</strong>
+                      <strong className="text-cyan-400">{(dbData?.leads || []).length} →</strong>
                     </div>
                   </div>
                 </div>
@@ -1743,7 +1731,7 @@ export default function RepFlowApp() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <div className={`p-5 rounded-2xl border space-y-2 text-xs ${cardBg}`}>
                   <h4 className={`font-bold ${textColor}`}>Live floor</h4>
-                  <p className={`text-[10px] ${subTextColor}`}>Capacity 80 â€¢ Live synced visits</p>
+                  <p className={`text-[10px] ${subTextColor}`}>Capacity 80 • Live synced visits</p>
                   <div className="flex items-baseline gap-2 pt-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#84cc16]" />
                     <span className="text-[10px] uppercase font-bold text-neutral-400">INSIDE NOW</span>
@@ -1780,7 +1768,7 @@ export default function RepFlowApp() {
                     </div>
                   </div>
                   <div className={`p-2.5 rounded-xl border text-[11px] font-mono mt-2 ${innerBg}`}>
-                    Active members: <strong>{activeMembersCount}</strong> â€¢ Profit: <strong className="text-[#84cc16]">â‚¹{netProfit}</strong>
+                    Active members: <strong>{activeMembersCount}</strong> • Profit: <strong className="text-[#84cc16]">₹{netProfit}</strong>
                   </div>
                 </div>
 
@@ -1790,7 +1778,7 @@ export default function RepFlowApp() {
                       <h4 className={`font-bold ${textColor}`}>Save these members</h4>
                       <p className={`text-[10px] ${subTextColor}`}>Highest value, highest risk</p>
                     </div>
-                    <span onClick={() => navigateTab('retention')} className="text-[#84cc16] text-[11px] font-bold cursor-pointer">All â†’</span>
+                    <span onClick={() => navigateTab('retention')} className="text-[#84cc16] text-[11px] font-bold cursor-pointer">All →</span>
                   </div>
 
                   <div className="space-y-2 pt-1">
@@ -1800,7 +1788,7 @@ export default function RepFlowApp() {
                           <span className="w-6 h-6 rounded-full bg-[#84cc16]/20 text-[#84cc16] flex items-center justify-center font-bold text-[10px]">{m.name.charAt(0)}</span>
                           <div>
                             <strong className={textColor}>{m.name}</strong>
-                            <p className={`text-[9px] ${subTextColor}`}>Dues: â‚¹{m.dues} â€¢ {m.plan}</p>
+                            <p className={`text-[9px] ${subTextColor}`}>Dues: ₹{m.dues} • {m.plan}</p>
                           </div>
                         </div>
                         <button onClick={() => openWhatsApp(m.phone, `Hi ${m.name}, update from ${dbData?.gymProfile?.name}!`)} className="p-1.5 text-[#84cc16] hover:bg-[#84cc16]/10 rounded">
@@ -1821,14 +1809,14 @@ export default function RepFlowApp() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1 text-neutral-300">
                   <div className="space-y-1">
-                    <p>â€¢ Collected today: <strong>â‚¹{totalCollectedToday}</strong></p>
-                    <p>â€¢ Dues outstanding: <strong className="text-rose-400">â‚¹{totalDuesPending}</strong> across {(dbData?.members || []).filter((m: any) => m.dues > 0).length} members</p>
-                    <p>â€¢ Check-ins recorded today: <strong>{recentCheckIns.length}</strong></p>
+                    <p>• Collected today: <strong>₹{totalCollectedToday}</strong></p>
+                    <p>• Dues outstanding: <strong className="text-rose-400">₹{totalDuesPending}</strong> across {(dbData?.members || []).filter((m: any) => m.dues > 0).length} members</p>
+                    <p>• Check-ins recorded today: <strong>{recentCheckIns.length}</strong></p>
                   </div>
                   <div className="space-y-1">
-                    <p>â€¢ Month to date: <strong className="text-[#84cc16]">â‚¹{totalMonthRevenue}</strong></p>
-                    <p>â€¢ Expiring in 7 days: <strong className="text-amber-400">{expiringCount} members</strong></p>
-                    <p>â€¢ Active pipeline leads: <strong>{(dbData?.leads || []).length} enquiries</strong></p>
+                    <p>• Month to date: <strong className="text-[#84cc16]">₹{totalMonthRevenue}</strong></p>
+                    <p>• Expiring in 7 days: <strong className="text-amber-400">{expiringCount} members</strong></p>
+                    <p>• Active pipeline leads: <strong>{(dbData?.leads || []).length} enquiries</strong></p>
                   </div>
                 </div>
               </div>
@@ -1916,11 +1904,11 @@ export default function RepFlowApp() {
                       const ptRecord = (dbData?.ptAssignments || []).find((p: any) => p.member?.toLowerCase() === m.name?.toLowerCase());
                       return (
                         <tr key={m.id} onClick={() => setSelectedMemberProfile(m)} className="hover:bg-[#84cc16]/5 cursor-pointer">
-                          <td className="p-2.5 sm:p-3 font-semibold">{m.name} <br/><span className="text-[10px] text-neutral-400 font-normal">{m.id} â€¢ {m.phone}</span></td>
+                          <td className="p-2.5 sm:p-3 font-semibold">{m.name} <br/><span className="text-[10px] text-neutral-400 font-normal">{m.id} • {m.phone}</span></td>
                           {isTrainer ? (
                             <>
                               <td className="p-2.5 sm:p-3 font-mono text-[#84cc16] font-bold">{ptRecord?.sessions || 12} sessions</td>
-                              <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>â‚¹{ptRecord?.price || 6000}</td>
+                              <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>₹{ptRecord?.price || 6000}</td>
                               <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{formatDDMMYYYY(ptRecord.startDate)} to {formatDDMMYYYY(ptRecord.endDate)}</td>
                             </>
                           ) : (
@@ -1928,7 +1916,7 @@ export default function RepFlowApp() {
                               <td className="p-2.5 sm:p-3"><span className="px-2 py-0.5 rounded-full text-[10px] bg-green-500/10 text-green-500 font-bold">{m.status}</span></td>
                               <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{m.plan}</td>
                               <td className="p-2.5 sm:p-3 font-bold text-amber-500">{getDaysLeft(m.expires)} days</td>
-                              <td className="p-2.5 sm:p-3 font-bold text-rose-500">â‚¹{m.dues}</td>
+                              <td className="p-2.5 sm:p-3 font-bold text-rose-500">₹{m.dues}</td>
                             </>
                           )}
                           <td className="p-2.5 sm:p-3 text-right space-x-1.5" onClick={(e) => e.stopPropagation()}>
@@ -1963,7 +1951,7 @@ export default function RepFlowApp() {
                   return (
                     <div key={stage} className={`p-2.5 rounded-xl border space-y-2 min-h-[160px] ${cardBg}`}>
                       <div className="flex justify-between items-center text-xs font-bold text-neutral-400 pb-1 border-b border-neutral-800">
-                        <span>â€¢ {stage}</span>
+                        <span>• {stage}</span>
                         <span className={`text-[10px] px-1.5 rounded ${innerBg}`}>{sLeads.length}</span>
                       </div>
                       {sLeads.map((lead: any) => (
@@ -1971,7 +1959,7 @@ export default function RepFlowApp() {
                           <div className="flex justify-between items-start">
                             <div>
                               <div className={`font-bold text-xs ${textColor}`}>{lead.name}</div>
-                              <div className={`text-[10px] ${subTextColor}`}>{lead.source} â€¢ {lead.plan}</div>
+                              <div className={`text-[10px] ${subTextColor}`}>{lead.source} • {lead.plan}</div>
                             </div>
                             <button onClick={(e) => { e.stopPropagation(); setActiveLeadDropdown(activeLeadDropdown === lead.id ? null : lead.id); }} className="text-neutral-400 hover:text-white p-1">
                               <MoreVertical className="w-3.5 h-3.5" />
@@ -2034,13 +2022,13 @@ export default function RepFlowApp() {
                           </div>
                           <p className={`text-[10px] ${subTextColor}`}>{trainer.specialty}</p>
                         </div>
-                        <span className="text-xs font-bold text-amber-500 bg-amber-400/10 px-2 py-0.5 rounded">â˜… {trainer.rating || "5.0"}</span>
+                        <span className="text-xs font-bold text-amber-500 bg-amber-400/10 px-2 py-0.5 rounded">★ {trainer.rating || "5.0"}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs py-1 border-y border-neutral-800">
                         <div>Clients: <strong>{trainer.clients || 0}</strong></div>
                         <div>Sessions: <strong>{trainer.sessions || 0}</strong></div>
-                        <div>PT Sold: <strong>â‚¹{trainer.sold || 0}</strong></div>
-                        <div>Commission: <strong className="text-[#84cc16]">â‚¹{trainer.commission || 0}</strong></div>
+                        <div>PT Sold: <strong>₹{trainer.sold || 0}</strong></div>
+                        <div>Commission: <strong className="text-[#84cc16]">₹{trainer.commission || 0}</strong></div>
                       </div>
                     </div>
                 ))}
@@ -2070,7 +2058,7 @@ export default function RepFlowApp() {
                           {!isTrainer && <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{pt.trainer}</td>}
                           <td className="p-2.5 sm:p-3 font-mono text-[#84cc16] font-bold">{pt.sessions} left</td>
                           <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{formatDDMMYYYY(pt.startDate)} to {formatDDMMYYYY(pt.endDate)}</td>
-                          <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>â‚¹{pt.price}</td>
+                          <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>₹{pt.price}</td>
                           <td className="p-2.5 sm:p-3 text-right space-x-1.5" onClick={(e) => e.stopPropagation()}>
                             <button 
                               onClick={() => handleCompletePTSession(pt.id)}
@@ -2096,7 +2084,7 @@ export default function RepFlowApp() {
           {/* TAB 5: COLLECTIONS */}
           {currentTab === 'collections' && (
             <div className="space-y-4">
-              <h2 className={`text-base sm:text-xl font-bold ${textColor}`}>Collections (Total Dues: â‚¹{totalDuesPending})</h2>
+              <h2 className={`text-base sm:text-xl font-bold ${textColor}`}>Collections (Total Dues: ₹{totalDuesPending})</h2>
               <div className={`border rounded-xl overflow-x-auto ${cardBg}`}>
                 <table className="w-full text-left text-xs min-w-[450px]">
                   <thead className={theme === 'dark' ? 'bg-[#121418] text-neutral-400' : 'bg-slate-100 text-slate-600'}>
@@ -2106,7 +2094,7 @@ export default function RepFlowApp() {
                     {(dbData?.members || []).filter((m: any) => m.dues > 0).map((m: any) => (
                       <tr key={m.id}>
                         <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{m.name}</td>
-                        <td className="p-2.5 sm:p-3 font-bold text-rose-500">â‚¹{m.dues}</td>
+                        <td className="p-2.5 sm:p-3 font-bold text-rose-500">₹{m.dues}</td>
                         <td className="p-2.5 sm:p-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <button onClick={(e) => { e.stopPropagation(); setPayForm({ member: m.name, phone: m.phone, amount: String(m.dues), method: 'UPI', category: 'Membership', note: 'Dues settled' }); setShowPaymentModal(true); }} className="px-3 py-1 bg-[#84cc16] text-black font-bold rounded text-xs">
                             Collect
@@ -2146,7 +2134,7 @@ export default function RepFlowApp() {
                         <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{p.member}</td>
                         <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{p.plan}</td>
                         <td className="p-2.5 sm:p-3 font-mono">{formatDDMMYYYY(p.date || todayStr)}</td>
-                        <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>â‚¹{p.amount}</td>
+                        <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>₹{p.amount}</td>
                         <td className="p-2.5 sm:p-3 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => downloadOfficialTemplatePDF(p)} className={`px-2 py-1 rounded text-[11px] inline-flex items-center gap-1 ${innerBg} ${textColor}`}>
                             <Download className="w-3 h-3" /> PDF
@@ -2166,7 +2154,7 @@ export default function RepFlowApp() {
               <div className="p-4 rounded-full bg-[#84cc16]/10 text-[#84cc16] mb-3">
                 <Lock className="w-7 h-7" />
               </div>
-              <h2 className={`text-xl sm:text-2xl font-bold ${textColor}`}>Store & POS â€” Coming Soon</h2>
+              <h2 className={`text-xl sm:text-2xl font-bold ${textColor}`}>Store & POS — Coming Soon</h2>
               <p className={`text-xs max-w-xs mt-1 ${subTextColor}`}>Inventory tracking and supplement counter billing will be enabled soon.</p>
             </div>
           )}
@@ -2209,23 +2197,23 @@ export default function RepFlowApp() {
                   )}
                 </div>
                 <div className="text-xs font-mono">
-                  Showing <strong>{filteredExpensesList.length}</strong> records (Total: <strong className="text-rose-500">â‚¹{filteredExpenseTotal}</strong>)
+                  Showing <strong>{filteredExpensesList.length}</strong> records (Total: <strong className="text-rose-500">₹{filteredExpenseTotal}</strong>)
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className={`p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[10px] text-neutral-400">TOTAL INCOME</p>
-                  <p className="text-xl sm:text-2xl font-black text-green-500 mt-1">â‚¹{totalMonthRevenue}</p>
+                  <p className="text-xl sm:text-2xl font-black text-green-500 mt-1">₹{totalMonthRevenue}</p>
                 </div>
                 <div className={`p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[10px] text-neutral-400">TOTAL EXPENSES (FILTERED)</p>
-                  <p className="text-xl sm:text-2xl font-black text-rose-500 mt-1">â‚¹{filteredExpenseTotal}</p>
+                  <p className="text-xl sm:text-2xl font-black text-rose-500 mt-1">₹{filteredExpenseTotal}</p>
                 </div>
                 <div className={`p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[10px] text-neutral-400">NET PROFIT (PERIOD)</p>
                   <p className={`text-xl sm:text-2xl font-black mt-1 ${totalMonthRevenue - filteredExpenseTotal >= 0 ? 'text-[#84cc16]' : 'text-rose-500'}`}>
-                    â‚¹{totalMonthRevenue - filteredExpenseTotal}
+                    ₹{totalMonthRevenue - filteredExpenseTotal}
                   </p>
                 </div>
               </div>
@@ -2249,7 +2237,7 @@ export default function RepFlowApp() {
                         <td className={`p-3 font-semibold ${textColor}`}>{exp.category}</td>
                         <td className={`p-3 ${subTextColor}`}>{exp.paidTo}</td>
                         <td className="p-3">{exp.method}</td>
-                        <td className="p-3 font-bold text-rose-500">â‚¹{exp.amount}</td>
+                        <td className="p-3 font-bold text-rose-500">₹{exp.amount}</td>
                         <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <button onClick={async () => { await fetch(`/api/expenses/${exp.id}`, { method: 'DELETE' }); fetchData(); }} className="text-neutral-400 hover:text-rose-500 p-1">
                             <Trash2 className="w-4 h-4 inline" />
@@ -2281,7 +2269,7 @@ export default function RepFlowApp() {
                 </div>
                 <div className={`p-3 sm:p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">REVENUE AT RISK</p>
-                  <p className="text-lg sm:text-2xl font-black text-rose-500 mt-1">â‚¹{totalDuesPending}</p>
+                  <p className="text-lg sm:text-2xl font-black text-rose-500 mt-1">₹{totalDuesPending}</p>
                 </div>
                 <div className={`p-3 sm:p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">RENEWAL RATE</p>
@@ -2315,7 +2303,7 @@ export default function RepFlowApp() {
                               </span>
                             </div>
                             <p className={`text-[10px] mt-0.5 ${subTextColor}`}>
-                              {item.plan} â€¢ Ends {formatDDMMYYYY(item.expires)} ({getDaysLeft(item.expires)}d left) â€¢ Dues: â‚¹{item.dues}
+                              {item.plan} • Ends {formatDDMMYYYY(item.expires)} ({getDaysLeft(item.expires)}d left) • Dues: ₹{item.dues}
                             </p>
                           </div>
                           <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -2364,7 +2352,7 @@ export default function RepFlowApp() {
                           </div>
                           <p className={`text-[9px] mt-0.5 ${subTextColor}`}>Expires: {formatDDMMYYYY(m.expires)} ({getDaysLeft(m.expires)}d left)</p>
                         </div>
-                        <strong className={textColor}>â‚¹{m.dues > 0 ? m.dues : 1500}</strong>
+                        <strong className={textColor}>₹{m.dues > 0 ? m.dues : 1500}</strong>
                       </div>
                     ))}
                   </div>
@@ -2422,13 +2410,13 @@ export default function RepFlowApp() {
                     {cohortList.map((m: any) => {
                       const finalMsg = broadcastMessage
                         .replace('{name}', m.name)
-                        .replace('{balance}', `â‚¹${m.dues}`)
+                        .replace('{balance}', `₹${m.dues}`)
                         .replace('{days}', `${getDaysLeft(m.expires)}`);
                       return (
                         <div key={m.id} className={`p-2.5 rounded-lg border flex justify-between items-center ${innerBg}`}>
                           <div>
                             <strong className={textColor}>{m.name}</strong>
-                            <div className={`text-[10px] ${subTextColor}`}>+91 {m.phone} â€¢ Dues: â‚¹{m.dues}</div>
+                            <div className={`text-[10px] ${subTextColor}`}>+91 {m.phone} • Dues: ₹{m.dues}</div>
                           </div>
                           <button 
                             onClick={(e) => { e.stopPropagation(); openWhatsApp(m.phone, finalMsg); }}
@@ -2457,12 +2445,12 @@ export default function RepFlowApp() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
                 <div className={`p-3.5 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">REVENUE THIS MONTH</p>
-                  <p className="text-xl sm:text-2xl font-black text-[#84cc16] mt-1">â‚¹{totalMonthRevenue > 1000 ? `${(totalMonthRevenue / 1000).toFixed(1)}k` : totalMonthRevenue}</p>
+                  <p className="text-xl sm:text-2xl font-black text-[#84cc16] mt-1">₹{totalMonthRevenue > 1000 ? `${(totalMonthRevenue / 1000).toFixed(1)}k` : totalMonthRevenue}</p>
                   <p className="text-[9px] text-green-500 mt-0.5">Live from payments</p>
                 </div>
                 <div className={`p-3.5 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">AVG REVENUE / MEMBER</p>
-                  <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>â‚¹{activeMembersCount > 0 ? Math.round(totalMonthRevenue / activeMembersCount) : 0}</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>₹{activeMembersCount > 0 ? Math.round(totalMonthRevenue / activeMembersCount) : 0}</p>
                   <p className="text-[9px] text-green-500 mt-0.5">Calculated per active base</p>
                 </div>
                 <div className={`p-3.5 rounded-xl border ${cardBg}`}>
@@ -2483,13 +2471,13 @@ export default function RepFlowApp() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div className={`lg:col-span-2 p-5 rounded-2xl border space-y-3 relative ${cardBg}`}>
                   <div className="flex justify-between items-center text-xs">
-                    <span className={`font-bold ${textColor}`}>Revenue â€” last 6 months (Dynamic)</span>
-                    <span className="text-[#84cc16] font-mono">â‚¹{totalMonthRevenue} this month</span>
+                    <span className={`font-bold ${textColor}`}>Revenue — last 6 months (Dynamic)</span>
+                    <span className="text-[#84cc16] font-mono">₹{totalMonthRevenue} this month</span>
                   </div>
 
                   {hoveredReportBar && (
                     <div className="absolute top-12 right-6 bg-black/95 border border-neutral-700 text-white px-3 py-1.5 rounded-lg text-xs shadow-xl pointer-events-none z-10 font-mono">
-                      Month: <strong>{hoveredReportBar.m}</strong> | Total: <strong className="text-[#84cc16]">â‚¹{hoveredReportBar.total}</strong>
+                      Month: <strong>{hoveredReportBar.m}</strong> | Total: <strong className="text-[#84cc16]">₹{hoveredReportBar.total}</strong>
                     </div>
                   )}
 
@@ -2535,27 +2523,27 @@ export default function RepFlowApp() {
                       <>
                         <div className="relative w-36 h-36 flex items-center justify-center my-2 cursor-pointer">
                           <div 
-                            onMouseEnter={() => setHoveredDonutSegment(`Total Collected: â‚¹${totalMonthRevenue}`)}
+                            onMouseEnter={() => setHoveredDonutSegment(`Total Collected: ₹${totalMonthRevenue}`)}
                             onMouseLeave={() => setHoveredDonutSegment(null)}
                             className="w-32 h-32 rounded-full border-[14px] border-[#84cc16] border-t-cyan-400 flex items-center justify-center hover:scale-105 transition"
                           >
-                            <span className={`font-bold text-xs ${textColor}`}>â‚¹{totalMonthRevenue}</span>
+                            <span className={`font-bold text-xs ${textColor}`}>₹{totalMonthRevenue}</span>
                           </div>
                         </div>
                         <div className={`flex justify-between w-full text-[11px] pt-1 ${subTextColor}`}>
                           <span 
-                            onMouseEnter={() => setHoveredDonutSegment(`Cash: â‚¹${cashTotal}`)}
+                            onMouseEnter={() => setHoveredDonutSegment(`Cash: ₹${cashTotal}`)}
                             onMouseLeave={() => setHoveredDonutSegment(null)}
                             className="flex items-center gap-1 cursor-pointer hover:text-white"
                           >
-                            <span className="w-2 h-2 rounded-full bg-cyan-400" /> Cash (â‚¹{cashTotal})
+                            <span className="w-2 h-2 rounded-full bg-cyan-400" /> Cash (₹{cashTotal})
                           </span>
                           <span 
-                            onMouseEnter={() => setHoveredDonutSegment(`Digital/UPI: â‚¹${upiTotal}`)}
+                            onMouseEnter={() => setHoveredDonutSegment(`Digital/UPI: ₹${upiTotal}`)}
                             onMouseLeave={() => setHoveredDonutSegment(null)}
                             className="flex items-center gap-1 cursor-pointer hover:text-white"
                           >
-                            <span className="w-2 h-2 rounded-full bg-[#84cc16]" /> Digital (â‚¹{upiTotal})
+                            <span className="w-2 h-2 rounded-full bg-[#84cc16]" /> Digital (₹{upiTotal})
                           </span>
                         </div>
                       </>
@@ -2573,7 +2561,7 @@ export default function RepFlowApp() {
                       <div 
                         key={idx} 
                         style={{ height: `${Math.max(item.total > 0 ? item.digPercent + item.cashPercent : 0, item.checkins > 0 ? 30 : 0)}%` }} 
-                        title={`${item.d}: â‚¹${item.total} (${item.checkins} check-ins)`}
+                        title={`${item.d}: ₹${item.total} (${item.checkins} check-ins)`}
                         className="flex-1 bg-cyan-400 rounded-t-sm hover:bg-[#84cc16] cursor-pointer transition" 
                       />
                     ))}
@@ -2592,7 +2580,7 @@ export default function RepFlowApp() {
                     <div>
                       <div className="flex justify-between text-xs mb-1">
                         <span>Membership & Training</span>
-                        <strong className={textColor}>â‚¹{totalMonthRevenue}</strong>
+                        <strong className={textColor}>₹{totalMonthRevenue}</strong>
                       </div>
                       <div className="h-1.5 rounded-full bg-neutral-800"><div className="w-full h-full bg-[#84cc16] rounded-full" /></div>
                     </div>
@@ -2605,11 +2593,11 @@ export default function RepFlowApp() {
                 <div className={`p-5 rounded-2xl border space-y-3 text-xs ${cardBg}`}>
                   <span className={`font-bold ${textColor}`}>Member base</span>
                   <div className="space-y-1.5 pt-1">
-                    <div className="flex justify-between text-amber-400"><span>â€¢ Expiring</span> <strong>{expiringCount}</strong></div>
-                    <div className="flex justify-between text-[#84cc16]"><span>â€¢ Active</span> <strong>{activeMembersCount}</strong></div>
-                    <div className="flex justify-between text-rose-400"><span>â€¢ Expired</span> <strong>{(dbData?.members || []).filter((m: any) => m.status === 'Expired').length}</strong></div>
-                    <div className="flex justify-between text-neutral-400"><span>â€¢ Cancelled</span> <strong>{(dbData?.members || []).filter((m: any) => m.status === 'Cancelled').length}</strong></div>
-                    <div className="flex justify-between text-neutral-500"><span>â€¢ Lapsed</span> <strong>{(dbData?.members || []).filter((m: any) => m.status === 'Lapsed').length}</strong></div>
+                    <div className="flex justify-between text-amber-400"><span>• Expiring</span> <strong>{expiringCount}</strong></div>
+                    <div className="flex justify-between text-[#84cc16]"><span>• Active</span> <strong>{activeMembersCount}</strong></div>
+                    <div className="flex justify-between text-rose-400"><span>• Expired</span> <strong>{(dbData?.members || []).filter((m: any) => m.status === 'Expired').length}</strong></div>
+                    <div className="flex justify-between text-neutral-400"><span>• Cancelled</span> <strong>{(dbData?.members || []).filter((m: any) => m.status === 'Cancelled').length}</strong></div>
+                    <div className="flex justify-between text-neutral-500"><span>• Lapsed</span> <strong>{(dbData?.members || []).filter((m: any) => m.status === 'Lapsed').length}</strong></div>
                   </div>
                   <div className={`pt-3 border-t text-[11px] space-y-1 ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
                     <span className="text-[10px] uppercase font-bold text-neutral-400">ACTIVE BY PLAN</span>
@@ -2685,7 +2673,7 @@ export default function RepFlowApp() {
             <div className="space-y-4 sm:space-y-6">
               <div>
                 <h2 className={`text-base sm:text-xl font-bold ${textColor}`}>Staff & access</h2>
-                <p className={`text-[10px] sm:text-xs ${subTextColor}`}>Who can do what â€” and a permanent record of every sensitive action.</p>
+                <p className={`text-[10px] sm:text-xs ${subTextColor}`}>Who can do what — and a permanent record of every sensitive action.</p>
               </div>
 
               <div className="flex gap-2 border-b border-neutral-800 pb-2 text-xs font-semibold">
@@ -2732,13 +2720,13 @@ export default function RepFlowApp() {
                       {Object.keys(dbData?.permissions || {}).map((action) => (
                         <tr key={action}>
                           <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{action}</td>
-                          <td className="p-2.5 sm:p-3 text-center text-[#84cc16] font-bold">âœ“</td>
+                          <td className="p-2.5 sm:p-3 text-center text-[#84cc16] font-bold">✓</td>
                           {['Trainer', 'Accountant'].map(role => (
                             <td 
                               key={role} 
                               className="p-2.5 sm:p-3 text-center font-bold"
                             >
-                              {dbData?.permissions[action]?.[role] ? <span className="text-[#84cc16]">âœ“</span> : <span className="text-neutral-500">â€”</span>}
+                              {dbData?.permissions[action]?.[role] ? <span className="text-[#84cc16]">✓</span> : <span className="text-neutral-500">—</span>}
                             </td>
                           ))}
                         </tr>
@@ -2801,8 +2789,8 @@ export default function RepFlowApp() {
                     {(dbData?.plans || []).map((plan: any) => (
                       <div key={plan.id} className={`p-4 rounded-xl border space-y-1.5 ${cardBg}`}>
                         <div className={`font-bold text-sm ${textColor}`}>{plan.name}</div>
-                        <div className="text-xl font-black text-[#84cc16]">â‚¹{plan.price}</div>
-                        <div className={`text-xs ${subTextColor}`}>{plan.days} days â€¢ {plan.sessions}</div>
+                        <div className="text-xl font-black text-[#84cc16]">₹{plan.price}</div>
+                        <div className={`text-xs ${subTextColor}`}>{plan.days} days • {plan.sessions}</div>
                         <button onClick={async () => { await fetch(`/api/plans/${plan.id}`, { method: 'DELETE' }); fetchData(); }} className="text-xs text-rose-500 hover:underline pt-1">Retire</button>
                       </div>
                     ))}
@@ -2958,7 +2946,7 @@ export default function RepFlowApp() {
             <div className="flex justify-between items-start">
               <div>
                 <h3 className={`text-base sm:text-lg font-bold ${textColor}`}>{selectedMemberProfile.name}</h3>
-                <p className={subTextColor}>{selectedMemberProfile.id} â€¢ +91 {selectedMemberProfile.phone}</p>
+                <p className={subTextColor}>{selectedMemberProfile.id} • +91 {selectedMemberProfile.phone}</p>
               </div>
               <button onClick={() => setSelectedMemberProfile(null)}><X className="w-4 h-4 text-neutral-400" /></button>
             </div>
@@ -2967,7 +2955,7 @@ export default function RepFlowApp() {
               <div><span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
-              <div><span className="text-neutral-400">Outstanding Dues:</span> <strong className="text-rose-500 block mt-0.5">â‚¹{selectedMemberProfile.dues}</strong></div>
+              <div><span className="text-neutral-400">Outstanding Dues:</span> <strong className="text-rose-500 block mt-0.5">₹{selectedMemberProfile.dues}</strong></div>
             </div>
             <div className="flex gap-1.5 pt-1">
               <button 
@@ -3012,7 +3000,7 @@ export default function RepFlowApp() {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className={`text-base font-bold ${textColor}`}>Renew Membership</h3>
-                <p className={`text-[11px] ${subTextColor}`}>{showRenewModal.name} â€¢ {showRenewModal.id}</p>
+                <p className={`text-[11px] ${subTextColor}`}>{showRenewModal.name} • {showRenewModal.id}</p>
               </div>
               <button type="button" onClick={() => setShowRenewModal(null)}><X className="w-4 h-4 text-neutral-400" /></button>
             </div>
@@ -3036,11 +3024,11 @@ export default function RepFlowApp() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-neutral-400">Amount Paid (â‚¹)</label>
+                <label className="text-neutral-400">Amount Paid (₹)</label>
                 <input type="number" required value={renewForm.amount} onChange={(e) => setRenewForm({ ...renewForm, amount: Number(e.target.value) })} className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold text-[#84cc16] ${innerBg}`} />
               </div>
               <div>
-                <label className="text-neutral-400">Remaining Dues (â‚¹)</label>
+                <label className="text-neutral-400">Remaining Dues (₹)</label>
                 <input type="number" value={renewForm.dues} onChange={(e) => setRenewForm({ ...renewForm, dues: Number(e.target.value) })} className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold text-rose-500 ${innerBg}`} />
               </div>
             </div>
@@ -3075,7 +3063,7 @@ export default function RepFlowApp() {
               </div>
             </div>
             <button type="submit" className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl text-xs sm:text-sm">
-              Confirm Renewal & Record â‚¹{renewForm.amount}
+              Confirm Renewal & Record ₹{renewForm.amount}
             </button>
           </form>
         </div>
@@ -3110,7 +3098,7 @@ export default function RepFlowApp() {
                 </select>
               </div>
               <div>
-                <label className="text-neutral-400">Plan Price (â‚¹)</label>
+                <label className="text-neutral-400">Plan Price (₹)</label>
                 <input type="number" value={newMemberForm.planPrice} onChange={(e) => setNewMemberForm({ ...newMemberForm, planPrice: Number(e.target.value) })} className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold text-[#84cc16] ${innerBg}`} />
               </div>
             </div>
@@ -3124,9 +3112,9 @@ export default function RepFlowApp() {
                   onChange={(e) => setNewMemberForm({ ...newMemberForm, includeAdmissionFee: e.target.checked })} 
                   className="w-4 h-4 accent-[#84cc16] cursor-pointer rounded" 
                 />
-                <span className={`font-semibold ${textColor}`}>Charge Admission Fee (â‚¹500)</span>
+                <span className={`font-semibold ${textColor}`}>Charge Admission Fee (₹500)</span>
               </label>
-              <span className="text-[11px] font-bold text-[#84cc16]">{newMemberForm.includeAdmissionFee ? '+â‚¹500' : 'Waived'}</span>
+              <span className="text-[11px] font-bold text-[#84cc16]">{newMemberForm.includeAdmissionFee ? '+₹500' : 'Waived'}</span>
             </div>
 
             {/* Assign Personal Trainer (PT) */}
@@ -3165,7 +3153,7 @@ export default function RepFlowApp() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-neutral-400">PT Fee (â‚¹)</label>
+                      <label className="text-[10px] text-neutral-400">PT Fee (₹)</label>
                       <input 
                         type="number" 
                         value={newMemberForm.ptPrice} 
@@ -3218,11 +3206,11 @@ export default function RepFlowApp() {
                 />
                 <span className={`font-semibold ${textColor}`}>Apply Tax / GST ({defaultTaxRate}%)</span>
               </label>
-              <span className="text-[11px] font-bold text-[#84cc16]">{newMemberForm.applyTax ? `+ â‚¹${calculatedTax}` : 'No Tax'}</span>
+              <span className="text-[11px] font-bold text-[#84cc16]">{newMemberForm.applyTax ? `+ ₹${calculatedTax}` : 'No Tax'}</span>
             </div>
 
             <div>
-              <label className="text-neutral-400">Outstanding Dues (â‚¹)</label>
+              <label className="text-neutral-400">Outstanding Dues (₹)</label>
               <input type="number" value={newMemberForm.dues} onChange={(e) => setNewMemberForm({ ...newMemberForm, dues: Number(e.target.value) })} placeholder="0" className={`w-full mt-1 px-3 py-2 border rounded-lg text-rose-500 font-bold ${innerBg}`} />
             </div>
 
@@ -3249,11 +3237,11 @@ export default function RepFlowApp() {
 
             {/* Summary Breakdown Footer (Clean Rupee Only) */}
             <div className={`p-2.5 rounded-xl border space-y-1 text-[11px] ${innerBg}`}>
-              <div className="flex justify-between"><span>Subtotal:</span><span>â‚¹{rawSubtotal}</span></div>
-              {discountAmount > 0 && <div className="flex justify-between text-rose-500"><span>Discount ({newMemberForm.discountPercent}%):</span><span>- â‚¹{discountAmount}</span></div>}
-              {calculatedTax > 0 && <div className="flex justify-between text-amber-500"><span>GST / Tax ({defaultTaxRate}%):</span><span>+ â‚¹{calculatedTax}</span></div>}
-              <div className="flex justify-between font-bold pt-1 border-t border-neutral-800"><span>Grand Total:</span><span className={textColor}>â‚¹{grandTotal}</span></div>
-              <div className="flex justify-between font-bold text-[#84cc16]"><span>Pay Now ({newMemberForm.paymentMethod}):</span><span>â‚¹{payNowCalculated}</span></div>
+              <div className="flex justify-between"><span>Subtotal:</span><span>₹{rawSubtotal}</span></div>
+              {discountAmount > 0 && <div className="flex justify-between text-rose-500"><span>Discount ({newMemberForm.discountPercent}%):</span><span>- ₹{discountAmount}</span></div>}
+              {calculatedTax > 0 && <div className="flex justify-between text-amber-500"><span>GST / Tax ({defaultTaxRate}%):</span><span>+ ₹{calculatedTax}</span></div>}
+              <div className="flex justify-between font-bold pt-1 border-t border-neutral-800"><span>Grand Total:</span><span className={textColor}>₹{grandTotal}</span></div>
+              <div className="flex justify-between font-bold text-[#84cc16]"><span>Pay Now ({newMemberForm.paymentMethod}):</span><span>₹{payNowCalculated}</span></div>
             </div>
 
             <button type="submit" className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl">Register & Generate Invoice</button>
@@ -3317,7 +3305,7 @@ export default function RepFlowApp() {
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="text-neutral-400">Dues (â‚¹)</label>
+                <label className="text-neutral-400">Dues (₹)</label>
                 <input 
                   type="number" 
                   value={showEditMemberModal.dues || 0} 
@@ -3526,7 +3514,7 @@ export default function RepFlowApp() {
                 <input name="ptSessions" type="number" defaultValue="12" className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold ${innerBg} ${textColor}`} />
               </div>
               <div>
-                <label className="text-neutral-400">Total Fee (â‚¹)</label>
+                <label className="text-neutral-400">Total Fee (₹)</label>
                 <input name="ptPrice" type="number" defaultValue="6000" className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold text-[#84cc16] ${innerBg}`} />
               </div>
             </div>
@@ -3561,7 +3549,7 @@ export default function RepFlowApp() {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className={`text-base font-bold ${textColor}`}>Edit PT Assignment</h3>
-                <p className={`text-[11px] ${subTextColor}`}>{showEditPTModal.member} â€¢ {showEditPTModal.trainer}</p>
+                <p className={`text-[11px] ${subTextColor}`}>{showEditPTModal.member} • {showEditPTModal.trainer}</p>
               </div>
               <button type="button" onClick={() => setShowEditPTModal(null)}><X className="w-4 h-4 text-neutral-400" /></button>
             </div>
@@ -3587,7 +3575,7 @@ export default function RepFlowApp() {
                 <input name="ptSessions" type="number" defaultValue={showEditPTModal.sessions} className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold ${innerBg} ${textColor}`} />
               </div>
               <div>
-                <label className="text-neutral-400">Total Fee (â‚¹)</label>
+                <label className="text-neutral-400">Total Fee (₹)</label>
                 <input name="ptPrice" type="number" defaultValue={showEditPTModal.price} className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold text-[#84cc16] ${innerBg}`} />
               </div>
             </div>
@@ -3645,14 +3633,14 @@ export default function RepFlowApp() {
                       className={`p-2 hover:bg-[#84cc16]/10 cursor-pointer flex justify-between ${textColor}`}
                     >
                       <strong>{m.name}</strong>
-                      <span className={`text-[10px] ${subTextColor}`}>Dues: â‚¹{m.dues}</span>
+                      <span className={`text-[10px] ${subTextColor}`}>Dues: ₹{m.dues}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
             <div>
-              <label className="text-neutral-400">Amount (â‚¹)</label>
+              <label className="text-neutral-400">Amount (₹)</label>
               <input type="number" required value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} placeholder="0" className={`w-full mt-1 px-3 py-2 border rounded-lg text-[#84cc16] font-bold text-sm ${innerBg}`} />
             </div>
             <div>
@@ -3675,7 +3663,7 @@ export default function RepFlowApp() {
                 <option>Day pass</option>
               </select>
             </div>
-            <button type="submit" className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl text-sm">Record â‚¹{payForm.amount || 0}</button>
+            <button type="submit" className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl text-sm">Record ₹{payForm.amount || 0}</button>
           </form>
         </div>
       )}
@@ -3699,7 +3687,7 @@ export default function RepFlowApp() {
               <input name="paidTo" defaultValue="BESCOM, Landlord" required className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
             </div>
             <div>
-              <label className="text-neutral-400">Amount (â‚¹)</label>
+              <label className="text-neutral-400">Amount (₹)</label>
               <input name="amount" type="number" required placeholder="5000" className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold ${innerBg} ${textColor}`} />
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -3749,7 +3737,7 @@ export default function RepFlowApp() {
                 <input name="planDays" type="number" defaultValue="180" required className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
               </div>
               <div>
-                <label className="text-neutral-400">Price (â‚¹)</label>
+                <label className="text-neutral-400">Price (₹)</label>
                 <input name="planPrice" type="number" placeholder="7000" required className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold text-[#84cc16] ${innerBg}`} />
               </div>
             </div>
@@ -3772,13 +3760,13 @@ export default function RepFlowApp() {
             
             <div className={`p-2.5 border rounded-xl text-left text-xs space-y-1 font-mono ${innerBg}`}>
               <div>Mobile: +91 {createdMemberCard.phone}</div>
-              <div>Plan: {createdMemberCard.plan} (â‚¹{createdMemberCard.basePlanAmount})</div>
-              {createdMemberCard.admissionAmount > 0 && <div className="text-amber-500">Admission Fee: â‚¹{createdMemberCard.admissionAmount}</div>}
-              {createdMemberCard.ptAmount > 0 && <div className="text-cyan-400">PT Package: â‚¹{createdMemberCard.ptAmount} (Trainer: {createdMemberCard.ptTrainer})</div>}
-              {createdMemberCard.discountAmount > 0 && <div className="text-rose-400">Discount: -â‚¹{createdMemberCard.discountAmount} ({createdMemberCard.discountPercent}%)</div>}
-              {createdMemberCard.calculatedTax > 0 && <div className="text-amber-400">Tax/GST ({createdMemberCard.taxPercent}%): + â‚¹{createdMemberCard.calculatedTax}</div>}
-              <div className="pt-1 border-t border-neutral-800 font-bold text-[#84cc16]">Grand Total: â‚¹{createdMemberCard.totalBill} (Paid via {createdMemberCard.paymentMethod}: â‚¹{createdMemberCard.totalPaid})</div>
-              {createdMemberCard.dues > 0 && <div className="text-rose-500 font-bold">Balance Dues: â‚¹{createdMemberCard.dues}</div>}
+              <div>Plan: {createdMemberCard.plan} (₹{createdMemberCard.basePlanAmount})</div>
+              {createdMemberCard.admissionAmount > 0 && <div className="text-amber-500">Admission Fee: ₹{createdMemberCard.admissionAmount}</div>}
+              {createdMemberCard.ptAmount > 0 && <div className="text-cyan-400">PT Package: ₹{createdMemberCard.ptAmount} (Trainer: {createdMemberCard.ptTrainer})</div>}
+              {createdMemberCard.discountAmount > 0 && <div className="text-rose-400">Discount: -₹{createdMemberCard.discountAmount} ({createdMemberCard.discountPercent}%)</div>}
+              {createdMemberCard.calculatedTax > 0 && <div className="text-amber-400">Tax/GST ({createdMemberCard.taxPercent}%): + ₹{createdMemberCard.calculatedTax}</div>}
+              <div className="pt-1 border-t border-neutral-800 font-bold text-[#84cc16]">Grand Total: ₹{createdMemberCard.totalBill} (Paid via {createdMemberCard.paymentMethod}: ₹{createdMemberCard.totalPaid})</div>
+              {createdMemberCard.dues > 0 && <div className="text-rose-500 font-bold">Balance Dues: ₹{createdMemberCard.dues}</div>}
               <div>Validity: {formatDDMMYYYY(createdMemberCard.startDate)} to {formatDDMMYYYY(createdMemberCard.expires)}</div>
             </div>
 
@@ -3788,11 +3776,11 @@ export default function RepFlowApp() {
                   const publicBase = getPublicAppUrl();
                   const invoiceFullUrl = `${publicBase}/api/invoices/${createdMemberCard.id}`;
                   
-                  const ptDetailsText = createdMemberCard.ptAmount > 0 ? `\n- PT Package: â‚¹${createdMemberCard.ptAmount} (${createdMemberCard.ptTrainer})` : '';
-                  const admDetailsText = createdMemberCard.admissionAmount > 0 ? '\n- Admission Fee: â‚¹500' : '';
-                  const duesText = createdMemberCard.dues > 0 ? `\n- Balance Dues: â‚¹${createdMemberCard.dues}` : '\n- Balance Dues: â‚¹0 (Fully Paid)';
+                  const ptDetailsText = createdMemberCard.ptAmount > 0 ? `\n- PT Package: ₹${createdMemberCard.ptAmount} (${createdMemberCard.ptTrainer})` : '';
+                  const admDetailsText = createdMemberCard.admissionAmount > 0 ? '\n- Admission Fee: ₹500' : '';
+                  const duesText = createdMemberCard.dues > 0 ? `\n- Balance Dues: ₹${createdMemberCard.dues}` : '\n- Balance Dues: ₹0 (Fully Paid)';
                   
-                  const welcomeMsg = `Hello ${createdMemberCard.name} !\n\nWelcome to ${dbData?.gymProfile?.name || 'Iron Temple Fitness'}.\nYour gym membership is successfully confirmed!\n\nMEMBERSHIP SUMMARY:\n- Member ID: ${createdMemberCard.id}\n- Plan: ${createdMemberCard.plan} (â‚¹${createdMemberCard.basePlanAmount})${admDetailsText}${ptDetailsText}\n- Total Paid: â‚¹${createdMemberCard.totalPaid} (via ${createdMemberCard.paymentMethod})${duesText}\n- Validity: ${formatDDMMYYYY(createdMemberCard.startDate)} to ${formatDDMMYYYY(createdMemberCard.expires)}\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`;
+                  const welcomeMsg = `Hello ${createdMemberCard.name} !\n\nWelcome to ${dbData?.gymProfile?.name || 'Iron Temple Fitness'}.\nYour gym membership is successfully confirmed!\n\nMEMBERSHIP SUMMARY:\n- Member ID: ${createdMemberCard.id}\n- Plan: ${createdMemberCard.plan} (₹${createdMemberCard.basePlanAmount})${admDetailsText}${ptDetailsText}\n- Total Paid: ₹${createdMemberCard.totalPaid} (via ${createdMemberCard.paymentMethod})${duesText}\n- Validity: ${formatDDMMYYYY(createdMemberCard.startDate)} to ${formatDDMMYYYY(createdMemberCard.expires)}\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`;
 
                   // Download invoice in background
                   downloadOfficialTemplatePDF(createdMemberCard);
@@ -3830,7 +3818,7 @@ export default function RepFlowApp() {
               <div>Client: <strong>{assignedPTSuccessCard.member}</strong></div>
               <div>Trainer: <strong>{assignedPTSuccessCard.trainer}</strong></div>
               <div>Sessions: <strong>{assignedPTSuccessCard.sessions} Sessions</strong></div>
-              <div>Fee Recorded: <strong className="text-[#84cc16]">â‚¹{assignedPTSuccessCard.price} ({assignedPTSuccessCard.method})</strong></div>
+              <div>Fee Recorded: <strong className="text-[#84cc16]">₹{assignedPTSuccessCard.price} ({assignedPTSuccessCard.method})</strong></div>
               <div>Duration: {formatDDMMYYYY(assignedPTSuccessCard.startDate)} to {formatDDMMYYYY(assignedPTSuccessCard.endDate)}</div>
             </div>
 
@@ -3839,7 +3827,7 @@ export default function RepFlowApp() {
                 onClick={() => {
                   const publicBase = getPublicAppUrl();
                   const invoiceFullUrl = `${publicBase}/api/invoices/INV-${assignedPTSuccessCard.receipt}`;
-                  const msg = `Hello ${assignedPTSuccessCard.member} !\n\nYour Personal Training package at ${dbData?.gymProfile?.name || 'Iron Temple Fitness'} is confirmed!\n\n- Coach: ${assignedPTSuccessCard.trainer}\n- Sessions: ${assignedPTSuccessCard.sessions} Sessions\n- Fee Paid: â‚¹{assignedPTSuccessCard.price} via ${assignedPTSuccessCard.method}\n- Validity: ${formatDDMMYYYY(assignedPTSuccessCard.startDate)} to ${formatDDMMYYYY(assignedPTSuccessCard.endDate)}\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`;
+                  const msg = `Hello ${assignedPTSuccessCard.member} !\n\nYour Personal Training package at ${dbData?.gymProfile?.name || 'Iron Temple Fitness'} is confirmed!\n\n- Coach: ${assignedPTSuccessCard.trainer}\n- Sessions: ${assignedPTSuccessCard.sessions} Sessions\n- Fee Paid: ₹{assignedPTSuccessCard.price} via ${assignedPTSuccessCard.method}\n- Validity: ${formatDDMMYYYY(assignedPTSuccessCard.startDate)} to ${formatDDMMYYYY(assignedPTSuccessCard.endDate)}\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`;
                   downloadOfficialTemplatePDF(assignedPTSuccessCard);
                   openWhatsApp('9876543210', msg);
                 }} 
@@ -3871,7 +3859,7 @@ export default function RepFlowApp() {
               <div>Receipt: <strong className="text-[#84cc16]">{receiptSuccess.receipt}</strong></div>
               <div>Member: <strong className={textColor}>{receiptSuccess.member}</strong></div>
               <div>Date: <strong className={textColor}>{formatDDMMYYYY(receiptSuccess.date || todayStr)}</strong></div>
-              <div>Amount: <strong className={textColor}>â‚¹{receiptSuccess.amount}</strong></div>
+              <div>Amount: <strong className={textColor}>₹{receiptSuccess.amount}</strong></div>
               <div>Method: <strong className={textColor}>{receiptSuccess.method}</strong></div>
             </div>
             <div className="flex gap-2">
@@ -3883,7 +3871,7 @@ export default function RepFlowApp() {
                   const publicBase = getPublicAppUrl();
                   const invoiceFullUrl = `${publicBase}/api/invoices/${receiptSuccess.receipt}`;
                   downloadOfficialTemplatePDF(receiptSuccess);
-                  openWhatsApp(receiptSuccess.phone || '919890073646', `Hello ${receiptSuccess.member} !\n\nPayment Receipt: ${receiptSuccess.receipt} - ${dbData?.gymProfile?.name} for â‚¹${receiptSuccess.amount} via ${receiptSuccess.method}.\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`);
+                  openWhatsApp(receiptSuccess.phone || '919890073646', `Hello ${receiptSuccess.member} !\n\nPayment Receipt: ${receiptSuccess.receipt} - ${dbData?.gymProfile?.name} for ₹${receiptSuccess.amount} via ${receiptSuccess.method}.\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`);
                   setReceiptSuccess(null);
                 }} 
                 className="w-1/2 py-2 bg-[#84cc16] text-black font-bold rounded-xl text-xs flex items-center justify-center gap-1"
