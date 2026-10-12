@@ -12,8 +12,10 @@ export async function GET(request: Request, { params }: { params: { slug: string
 
   if (endpoint === 'data') {
     try {
-      const [members, payments, expenses, gymProfile] = await Promise.all([
+      const [members, leads, trainers, payments, expenses, gymProfile] = await Promise.all([
         prisma.member.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
+        prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
+        prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
         prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
         prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
         prisma.gymProfile.findFirst().catch(() => null)
@@ -33,10 +35,10 @@ export async function GET(request: Request, { params }: { params: { slug: string
           maxStaffDiscount: 20
         },
         members: members || [],
+        leads: leads || [],
+        trainers: trainers || [],
         payments: payments || [],
         expenses: expenses || [],
-        leads: [],
-        trainers: [],
         ptAssignments: [],
         plans: [
           { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
@@ -74,13 +76,13 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
     const created = await prisma.member.create({
       data: {
-        name: body.name,
-        phone: cleanPhone,
+        name: body.name || 'Unnamed Member',
+        phone: cleanPhone || '0000000000',
         gender: body.gender || 'Male',
         plan: body.plan || 'Monthly',
         startDate: body.startDate || new Date().toISOString().split('T')[0],
         expires: body.expires || new Date().toISOString().split('T')[0],
-        status: 'Active',
+        status: body.status || 'Active',
         dues: Number(body.dues || 0)
       }
     });
@@ -102,12 +104,39 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ success: true, member: created });
   }
 
+  if (endpoint === 'leads') {
+    const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
+    const lead = await prisma.lead.create({
+      data: {
+        name: body.name || 'New Lead',
+        phone: cleanPhone || '0000000000',
+        source: body.source || 'Walk-in',
+        status: body.status || 'New',
+        notes: body.notes || ''
+      }
+    });
+    return NextResponse.json({ success: true, lead });
+  }
+
+  if (endpoint === 'trainers') {
+    const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
+    const trainer = await prisma.trainer.create({
+      data: {
+        name: body.name || 'Trainer',
+        phone: cleanPhone || '0000000000',
+        specialty: body.specialty || 'General Fitness',
+        active: body.active !== false
+      }
+    });
+    return NextResponse.json({ success: true, trainer });
+  }
+
   if (endpoint === 'payments') {
     const p = await prisma.payment.create({
       data: {
         receipt: 'RCPT-' + Math.floor(1000 + Math.random() * 9000),
-        member: body.member,
-        phone: body.phone,
+        member: body.member || 'Member',
+        phone: body.phone || '',
         amount: Number(body.amount || 0),
         method: body.method || 'Cash',
         plan: body.plan || 'Membership',
@@ -121,8 +150,8 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   if (endpoint === 'expenses') {
     const exp = await prisma.expense.create({
       data: {
-        category: body.category,
-        paidTo: body.paidTo,
+        category: body.category || 'General',
+        paidTo: body.paidTo || '',
         amount: Number(body.amount || 0),
         method: body.method || 'Cash',
         date: body.date || new Date().toISOString().split('T')[0]
@@ -145,6 +174,16 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
 
   if (endpoint.startsWith('members/')) {
     await prisma.member.delete({ where: { id } }).catch(() => null);
+    return NextResponse.json({ success: true });
+  }
+
+  if (endpoint.startsWith('leads/')) {
+    await prisma.lead.delete({ where: { id } }).catch(() => null);
+    return NextResponse.json({ success: true });
+  }
+
+  if (endpoint.startsWith('trainers/')) {
+    await prisma.trainer.delete({ where: { id } }).catch(() => null);
     return NextResponse.json({ success: true });
   }
 

@@ -1,85 +1,93 @@
 generator client {
-provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-provider = "postgresql"
-url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
-OWNER
-ADMIN
-TRAINER
-ACCOUNTANT
-STAFF
-}
-
-enum PlanType {
-MONTHLY
-QUARTERLY
-HALF_YEARLY
-ANNUAL
-}
-
-enum MemberStatus {
-ACTIVE
-INACTIVE
-EXPIRED
+  OWNER
+  ADMIN
+  TRAINER
+  ACCOUNTANT
+  STAFF
 }
 
 model User {
-id        String   @id @default(cuid())
-email     String   @unique
-name      String?
-password  String
-role      Role     @default(STAFF)
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Member {
-id        String   @id @default(cuid())
-name      String
-phone     String
-gender    String?
-plan      String
-startDate String
-expires   String
-status    String   @default("Active")
-dues      Float    @default(0)
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  gender    String?
+  plan      String
+  startDate String
+  expires   String
+  status    String   @default("Active")
+  dues      Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  source    String?  @default("Walk-in")
+  status    String   @default("New")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Trainer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  specialty String?  @default("General Fitness")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Payment {
-id        String   @id @default(cuid())
-receipt   String   @unique
-member    String
-phone     String
-amount    Float
-method    String
-plan      String
-note      String?
-date      String
-createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  receipt   String   @unique
+  member    String
+  phone     String
+  amount    Float
+  method    String
+  plan      String
+  note      String?
+  date      String
+  createdAt DateTime @default(now())
 }
 
 model Expense {
-id        String   @id @default(cuid())
-category  String
-paidTo    String
-amount    Float
-method    String
-date      String
-createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  category  String
+  paidTo    String
+  amount    Float
+  method    String
+  date      String
+  createdAt DateTime @default(now())
 }
 
 model GymProfile {
-id        String   @id @default(cuid())
-name      String   @default("Iron Temple Fitness")
-branch    String   @default("Indiranagar, Bengaluru")
-phone     String   @default("9845012345")
-publicUrl String   @default("https://rep-flow-gym-operating-system-4o78.vercel.app")
-gstin     String?  @default("29AABCI1234F1Z8")
+  id        String   @id @default(cuid())
+  name      String   @default("Iron Temple Fitness")
+  branch    String   @default("Indiranagar, Bengaluru")
+  phone     String   @default("9845012345")
+  publicUrl String   @default("https://rep-flow-gym-operating-system-4o78.vercel.app")
+  gstin     String?  @default("29AABCI1234F1Z8")
 }
