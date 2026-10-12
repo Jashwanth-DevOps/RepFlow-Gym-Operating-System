@@ -12,14 +12,40 @@ export async function GET(request: Request, { params }: { params: { slug: string
 
   if (endpoint === 'data') {
     try {
-      const [members, leads, trainers, payments, expenses, gymProfile] = await Promise.all([
-        prisma.member.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
+      const [rawMembers, rawLeads, rawTrainers, rawPayments, rawExpenses, gymProfile] = await Promise.all([
+        prisma.member.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
+        prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
+        prisma.trainer.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
+        prisma.payment.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
+        prisma.expense.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
         prisma.gymProfile.findFirst().catch(() => null)
       ]);
+
+      const members = rawMembers.map((m: any, idx: number) => ({
+        id: m.id,
+        name: m.name,
+        phone: m.phone,
+        gender: m.gender || 'Male',
+        plan: m.plan,
+        startDate: m.startDate,
+        expires: m.expires,
+        status: m.status || 'Active',
+        dues: Number(m.dues || 0),
+        dueAmount: Number(m.dues || 0),
+        code: `IT${1001 + idx}`,
+        daysLeft: 90,
+        paymentsCount: 1,
+        lastActivity: m.startDate || 'Recent'
+      }));
+
+      const leads = rawLeads.map((l: any) => ({
+        id: l.id,
+        name: l.name,
+        phone: l.phone,
+        source: l.source || 'Walk-in',
+        status: l.status || 'New',
+        notes: l.notes || ''
+      }));
 
       return NextResponse.json({
         gymProfile: gymProfile || {
@@ -34,11 +60,11 @@ export async function GET(request: Request, { params }: { params: { slug: string
           taxPercent: 18,
           maxStaffDiscount: 20
         },
-        members: members || [],
-        leads: leads || [],
-        trainers: trainers || [],
-        payments: payments || [],
-        expenses: expenses || [],
+        members,
+        leads,
+        trainers: rawTrainers || [],
+        payments: rawPayments || [],
+        expenses: rawExpenses || [],
         ptAssignments: [],
         plans: [
           { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
@@ -74,10 +100,22 @@ export async function POST(request: Request, { params }: { params: { slug: strin
 
   if (endpoint === 'members') {
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return NextResponse.json({ error: 'Please enter a valid 10-digit mobile number' }, { status: 400 });
+    }
+
+    const existingMember = await prisma.member.findFirst({
+      where: { phone: cleanPhone }
+    });
+
+    if (existingMember) {
+      return NextResponse.json({ error: `Mobile number ${cleanPhone} is already registered.` }, { status: 409 });
+    }
+
     const created = await prisma.member.create({
       data: {
         name: body.name || 'Unnamed Member',
-        phone: cleanPhone || '0000000000',
+        phone: cleanPhone,
         gender: body.gender || 'Male',
         plan: body.plan || 'Monthly',
         startDate: body.startDate || new Date().toISOString().split('T')[0],
@@ -106,10 +144,22 @@ export async function POST(request: Request, { params }: { params: { slug: strin
 
   if (endpoint === 'leads') {
     const cleanPhone = (body.phone || '').replace(/[^0-9]/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) {
+      return NextResponse.json({ error: 'Please enter a valid 10-digit mobile number' }, { status: 400 });
+    }
+
+    const existingLead = await prisma.lead.findFirst({
+      where: { phone: cleanPhone }
+    });
+
+    if (existingLead) {
+      return NextResponse.json({ error: `Mobile number ${cleanPhone} already exists as a lead.` }, { status: 409 });
+    }
+
     const lead = await prisma.lead.create({
       data: {
         name: body.name || 'New Lead',
-        phone: cleanPhone || '0000000000',
+        phone: cleanPhone,
         source: body.source || 'Walk-in',
         status: body.status || 'New',
         notes: body.notes || ''
