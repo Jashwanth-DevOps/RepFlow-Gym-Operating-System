@@ -23,6 +23,27 @@ export default function RepFlowApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // 3-minute inactivity auto-lock session timer
+  useEffect(() => {
+    let idleTimer: NodeJS.Timeout;
+    const IDLE_LIMIT = 3 * 60 * 1000; // 3 minutes
+
+    const resetTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        setIsAuthenticated(false);
+      }, IDLE_LIMIT);
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    events.forEach((evt) => window.addEventListener(evt, resetTimer));
+    resetTimer();
+
+    return () => {
+      clearTimeout(idleTimer);
+      events.forEach((evt) => window.removeEventListener(evt, resetTimer));
+    };
+  }, []);
   const [activeUser, setActiveUser] = useState<any>({ name: 'Gym Owner', role: 'Owner', email: 'owner@gym.com' });
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPass, setLoginPass] = useState('');
