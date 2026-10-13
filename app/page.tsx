@@ -1808,8 +1808,8 @@ export default function RepFlowApp() {
                       <div className="h-1.5 rounded-full bg-neutral-800"><div className="w-full h-full bg-[#84cc16] rounded-full" /></div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-[11px] mb-1"><span>Renewal rate</span><strong>{(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / dbData.members.length) * 100) : 100}%</strong></div>
-                      <div className="h-1.5 rounded-full bg-neutral-800"><div style={{ width: `${(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / dbData.members.length) * 100) : 100}%` }} className="h-full bg-[#84cc16] rounded-full" /></div>
+                      <div className="flex justify-between text-[11px] mb-1"><span>Renewal rate</span><strong>{(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / (dbData?.members || []).length) * 100) : 100}%</strong></div>
+                      <div className="h-1.5 rounded-full bg-neutral-800"><div style={{ width: `${(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / (dbData?.members || []).length) * 100) : 100}%` }} className="h-full bg-[#84cc16] rounded-full" /></div>
                     </div>
                     <div>
                       <div className="flex justify-between text-[11px] mb-1"><span>Members on AutoPay</span><strong>22%</strong></div>
@@ -2322,7 +2322,7 @@ export default function RepFlowApp() {
                 </div>
                 <div className={`p-3 sm:p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">RENEWAL RATE</p>
-                  <p className={`text-lg sm:text-2xl font-black mt-1 ${textColor}`}>{(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / dbData.members.length) * 100) : 0}%</p>
+                  <p className={`text-lg sm:text-2xl font-black mt-1 ${textColor}`}>{(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / (dbData?.members || []).length) * 100) : 0}%</p>
                 </div>
                 <div className={`p-3 sm:p-4 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">SAVED THIS MONTH</p>
@@ -2504,13 +2504,13 @@ export default function RepFlowApp() {
                 </div>
                 <div className={`p-3.5 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">RENEWAL RATE</p>
-                  <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>{(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / dbData.members.length) * 100) : 60}%</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>{(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / (dbData?.members || []).length) * 100) : 60}%</p>
                   <p className={`text-[9px] mt-0.5 ${subTextColor}`}>Active / Registered</p>
                 </div>
                 <div className={`p-3.5 rounded-xl border ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">LEAD CONVERSION</p>
                   <p className={`text-xl sm:text-2xl font-black mt-1 ${textColor}`}>
-                    {(dbData?.leads || []).length > 0 ? Math.round(((dbData.leads.filter((l: any) => l.stage === 'Converted').length) / dbData.leads.length) * 100) : 0}%
+                    {(dbData?.leads || []).length > 0 ? Math.round(((dbData.leads.filter((l: any) => l.stage === 'Converted').length) / (dbData?.leads || []).length) * 100) : 0}%
                   </p>
                   <p className={`text-[9px] mt-0.5 ${subTextColor}`}>{(dbData?.leads || []).filter((l: any) => l.stage === 'Converted').length} of {(dbData?.leads || []).length} converted</p>
                 </div>
