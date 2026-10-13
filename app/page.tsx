@@ -1007,7 +1007,7 @@ export default function RepFlowApp() {
       tableHeaders = '<th>ID</th><th>NAME</th><th>PHONE</th><th>PLAN</th><th>STATUS</th><th>DUES</th><th>EXPIRES (DD-MM-YYYY)</th>';
       tableRows = list.map((m: any) => `
         <tr>
-          <td>${m.id}</td>
+          <td>${m.code || "IT1001"}</td>
           <td><strong>${m.name}</strong></td>
           <td>+91 ${m.phone}</td>
           <td>${m.plan}</td>
@@ -1103,7 +1103,7 @@ export default function RepFlowApp() {
 
     const memberRows = members.map((m: any) => `
       <tr>
-        <td>${m.id}</td>
+        <td>${m.code || "IT1001"}</td>
         <td><strong>${m.name}</strong></td>
         <td>+91 ${m.phone}</td>
         <td>${m.plan}</td>
@@ -1832,7 +1832,7 @@ export default function RepFlowApp() {
 
                   <div className="space-y-2 pt-1">
                     {(dbData?.members || []).slice(0, 4).map((m: any, i: number) => (
-                      <div key={m.id} className={`flex justify-between items-center p-2 rounded-xl border ${innerBg}`}>
+                      <div key={m.code || "IT1001"} className={`flex justify-between items-center p-2 rounded-xl border ${innerBg}`}>
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full bg-[#84cc16]/20 text-[#84cc16] flex items-center justify-center font-bold text-[10px]">{m.name.charAt(0)}</span>
                           <div>
@@ -1952,7 +1952,7 @@ export default function RepFlowApp() {
                     }).map((m: any) => {
                       const ptRecord = (dbData?.ptAssignments || []).find((p: any) => p.member?.toLowerCase() === m.name?.toLowerCase());
                       return (
-                        <tr key={m.id} onClick={() => setSelectedMemberProfile(m)} className="hover:bg-[#84cc16]/5 cursor-pointer">
+                        <tr key={m.code || "IT1001"} onClick={() => setSelectedMemberProfile(m)} className="hover:bg-[#84cc16]/5 cursor-pointer">
                           <td className="p-2.5 sm:p-3 font-semibold">{m.name} <br/><span className="text-[10px] text-neutral-400 font-normal">{m.code || "IT1001"} • {m.phone}</span></td>
                           {isTrainer ? (
                             <>
@@ -2141,7 +2141,7 @@ export default function RepFlowApp() {
                   </thead>
                   <tbody className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
                     {(dbData?.members || []).filter((m: any) => m.dues > 0).map((m: any) => (
-                      <tr key={m.id}>
+                      <tr key={m.code || "IT1001"}>
                         <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{m.name}</td>
                         <td className="p-2.5 sm:p-3 font-bold text-rose-500">₹{m.dues}</td>
                         <td className="p-2.5 sm:p-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -2393,7 +2393,7 @@ export default function RepFlowApp() {
                   </div>
                   <div className="space-y-2">
                     {(dbData?.members || []).map((m: any, idx: number) => (
-                      <div key={m.id} className={`p-2.5 rounded-xl border flex justify-between items-center ${innerBg}`}>
+                      <div key={m.code || "IT1001"} className={`p-2.5 rounded-xl border flex justify-between items-center ${innerBg}`}>
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="w-4 h-4 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center text-[9px] font-bold">8{idx}</span>
@@ -2462,7 +2462,7 @@ export default function RepFlowApp() {
                         .replace('{balance}', `₹${m.dues}`)
                         .replace('{days}', `${getDaysLeft(m.expires)}`);
                       return (
-                        <div key={m.id} className={`p-2.5 rounded-lg border flex justify-between items-center ${innerBg}`}>
+                        <div key={m.code || "IT1001"} className={`p-2.5 rounded-lg border flex justify-between items-center ${innerBg}`}>
                           <div>
                             <strong className={textColor}>{m.name}</strong>
                             <div className={`text-[10px] ${subTextColor}`}>+91 {m.phone} • Dues: ₹{m.dues}</div>
@@ -3035,7 +3035,8 @@ export default function RepFlowApp() {
             </div>
             <div className={`grid grid-cols-2 gap-2.5 py-2 border-y ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
               <div><span className="text-neutral-400">Plan:</span> <strong className={`block mt-0.5 ${textColor}`}>{selectedMemberProfile.plan}</strong></div>
-              <div><span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
+              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{selectedMember?.checkInsCount || 14} days</span></div>
+<span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
               <div><span className="text-neutral-400">Outstanding Dues:</span> <strong className="text-rose-500 block mt-0.5">₹{selectedMemberProfile.dues}</strong></div>
@@ -3581,7 +3582,7 @@ export default function RepFlowApp() {
               <label className="text-neutral-400 block mt-2">Select Filtered Member</label>
               <select name="ptMember" className={`w-full mt-1 px-3 py-2 border rounded-lg font-semibold ${innerBg} ${textColor}`}>
                 {(dbData?.members || []).filter((m: any) => m.name.toLowerCase().includes(ptMemberSearch.toLowerCase())).map((m: any) => (
-                  <option key={m.id} value={m.name}>{m.name} ({m.phone})</option>
+                  <option key={m.code || "IT1001"} value={m.name}>{m.name} ({m.phone})</option>
                 ))}
               </select>
             </div>
@@ -3640,7 +3641,7 @@ export default function RepFlowApp() {
               <label className="text-neutral-400">Reselect Member</label>
               <select name="editPtMember" defaultValue={showEditPTModal.member} className={`w-full mt-1 px-3 py-2 border rounded-lg font-semibold ${innerBg} ${textColor}`}>
                 {(dbData?.members || []).map((m: any) => (
-                  <option key={m.id} value={m.name}>{m.name} ({m.phone})</option>
+                  <option key={m.code || "IT1001"} value={m.name}>{m.name} ({m.phone})</option>
                 ))}
               </select>
             </div>
@@ -3708,7 +3709,7 @@ export default function RepFlowApp() {
                 <div className={`mt-1 max-h-28 overflow-y-auto border rounded-lg divide-y ${innerBg}`}>
                   {(dbData?.members || []).filter((m: any) => m.name.toLowerCase().includes(payMemberSearch.toLowerCase())).map((m: any) => (
                     <div 
-                      key={m.id} 
+                      key={m.code || "IT1001"} 
                       onClick={() => {
                         setPayForm({ ...payForm, member: m.name, phone: m.phone, amount: String(m.dues || 1500) });
                         setPayMemberSearch(m.name);

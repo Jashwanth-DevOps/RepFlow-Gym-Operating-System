@@ -96,15 +96,15 @@ export async function GET(request: Request, { params }: { params: { slug: string
       </thead>
       <tbody>
         <tr class="sec-header"><td colspan="4">1. MEMBERSHIP</td></tr>
-        <tr><td>1.1</td><td>Membership Plan: ${planName}</td><td>${startDate} to${expiresDate}</td><td class="text-right">₹${grandTotal}</td></tr>
+        <tr><td>1.1</td><td>Membership Plan: ${planName}</td><td>${startDate} to ${expiresDate}</td><td class="text-right">₹${grandTotal}</td></tr>
         <tr class="sec-header"><td colspan="4">2. ADMISSION / JOINING FEE</td></tr>
-        <tr><td>2.1</td><td>One-time admission / registration fee</td><td>One-time</td><td class="text-right">₹0</td></tr>
+        <tr><td>2.1</td><td>One-time admission fee</td><td>One-time</td><td class="text-right">₹0</td></tr>
       </tbody>
     </table>
     <div class="summary-wrap">
       <table class="summary-table">
         <tr><td>Membership Subtotal:</td><td class="text-right">₹${grandTotal}</td></tr>
-        <tr><td>Tax / GST:</td><td class="text-right">₹${Math.round(grandTotal * 0.18)}</td></tr>
+        <tr><td>Tax / GST (18%):</td><td class="text-right">₹${Math.round(grandTotal * 0.18)}</td></tr>
         <tr class="grand-row"><td>GRAND TOTAL:</td><td class="text-right">₹${grandTotal}</td></tr>
         <tr><td style="padding-top: 8px;">Amount Received:</td><td class="text-right paid-val" style="padding-top: 8px;">₹${paid}</td></tr>
         <tr><td>BALANCE DUE:</td><td class="text-right due-val">₹${dues}</td></tr>
@@ -128,7 +128,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   if (endpoint === 'data') {
     try {
       const [rawMembers, rawLeads, rawTrainers, rawPayments, rawExpenses, gymProfile] = await Promise.all([
-        prisma.member.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
+        prisma.member.findMany({ orderBy: { id: 'asc' } }).catch(() => []),
         prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
         prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
         prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
@@ -138,7 +138,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
 
       const totalCount = rawMembers.length;
       const members = (rawMembers || []).map((m: any, idx: number) => {
-        const codeNum = 1001 + (totalCount - 1 - idx);
+        const codeNum = 1001 + idx;
         return {
           id: m.id,
           name: m.name || 'Member',
@@ -158,21 +158,12 @@ export async function GET(request: Request, { params }: { params: { slug: string
         };
       });
 
-      const leads = (rawLeads || []).map((l: any) => ({
-        id: l.id,
-        name: l.name || 'Lead',
-        phone: l.phone || '',
-        source: l.source || 'Walk-in',
-        status: l.status || 'New',
-        notes: l.notes || ''
-      }));
-
       const trainers = (rawTrainers || []).map((t: any) => ({
         id: t.id,
         name: t.name || 'Trainer',
         email: (t as any).email || `${t.phone}@gym.com`,
         phone: t.phone || '',
-        specialty: t.specialty || 'General Fitness',
+        specialty: t.specialty || 'Strength & HIIT',
         active: t.active !== false
       }));
 
@@ -203,7 +194,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
             maxStaffDiscount: 20
           },
           members,
-          leads,
+          leads: rawLeads || [],
           trainers,
           staff,
           payments: (rawPayments || []).map((p: any) => ({
