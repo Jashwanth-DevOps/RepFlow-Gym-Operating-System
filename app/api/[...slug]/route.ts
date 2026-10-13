@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
-const prisma = globalForPrisma.prisma || new PrismaClient();
+const prisma = globalForPrisma.prisma || new PrismaClient({ log: ['error'] });
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function GET(request: Request, { params }: { params: { slug: string[] } }) {
@@ -24,7 +24,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
 
       const memberName = member?.name || 'Valued Member';
       const phone = member?.phone ? `+91 ${member.phone}` : '+91 9999999999';
-      const planName = member?.plan || 'Monthly';
+      const planName = member?.plan || 'Quarterly';
       const receiptNo = payment?.receipt || 'RCPT-' + Math.floor(1000 + Math.random() * 9000);
       const dues = Number(member?.dues || 0);
       const paid = Number(payment?.amount || 0);
@@ -126,127 +126,135 @@ export async function GET(request: Request, { params }: { params: { slug: string
   }
 
   if (endpoint === 'data') {
+    let dbError: string | null = null;
+    let rawMembers: any[] = [];
+    let rawLeads: any[] = [];
+    let rawTrainers: any[] = [];
+    let rawPayments: any[] = [];
+    let rawExpenses: any[] = [];
+    let gymProfile: any = null;
+
     try {
-      const [rawMembers, rawLeads, rawTrainers, rawPayments, rawExpenses, gymProfile] = await Promise.all([
-        prisma.member.findMany({ orderBy: { id: 'asc' } }).catch(() => []),
-        prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-        prisma.gymProfile.findFirst().catch(() => null)
-      ]);
-
-      const totalCount = rawMembers.length;
-      const members = (rawMembers || []).map((m: any, idx: number) => {
-        const codeNum = 1001 + idx;
-        return {
-          id: m.id,
-          name: m.name || 'Member',
-          phone: m.phone || '',
-          gender: m.gender || 'Male',
-          plan: m.plan || 'Monthly',
-          startDate: m.startDate || new Date().toISOString().split('T')[0],
-          expires: m.expires || new Date().toISOString().split('T')[0],
-          status: m.status || 'Active',
-          dues: Number(m.dues || 0),
-          dueAmount: Number(m.dues || 0),
-          code: `IT${codeNum}`,
-          daysLeft: 90,
-          paymentsCount: 1,
-          lastActivity: m.startDate || 'Recent',
-          checkInsCount: Math.floor(Math.random() * 8) + 12
-        };
-      });
-
-      const trainers = (rawTrainers || []).map((t: any) => ({
-        id: t.id,
-        name: t.name || 'Trainer',
-        email: (t as any).email || `${t.phone}@gym.com`,
-        phone: t.phone || '',
-        specialty: t.specialty || 'Strength & HIIT',
-        active: t.active !== false
-      }));
-
-      const staff = [
-        { id: 'S1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner', active: true },
-        ...trainers.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          email: t.email,
-          phone: t.phone,
-          role: 'Trainer',
-          active: t.active
-        }))
-      ];
-
-      return NextResponse.json(
-        {
-          gymProfile: gymProfile || {
-            name: 'Iron Temple Fitness',
-            branch: 'Indiranagar, Bengaluru',
-            phone: '9845012345',
-            publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
-          },
-          billingSettings: {
-            receiptType: 'GST tax invoice',
-            gstin: '29AABCI1234F1Z8',
-            taxPercent: 18,
-            maxStaffDiscount: 20
-          },
-          members,
-          leads: rawLeads || [],
-          trainers,
-          staff,
-          payments: (rawPayments || []).map((p: any) => ({
-            id: p.id,
-            receipt: p.receipt || 'RCPT-1001',
-            member: p.member || 'Member',
-            phone: p.phone || '',
-            amount: Number(p.amount || 0),
-            method: p.method || 'Cash',
-            plan: p.plan || 'Membership',
-            note: p.note || '',
-            date: p.date || new Date().toISOString().split('T')[0]
-          })),
-          expenses: (rawExpenses || []).map((e: any) => ({
-            id: e.id,
-            title: e.title || 'Expense',
-            amount: Number(e.amount || 0),
-            category: e.category || 'General',
-            date: e.date || new Date().toISOString().split('T')[0]
-          })),
-          ptAssignments: [],
-          attendance: [],
-          enquiries: [],
-          transactions: rawPayments || [],
-          smsLogs: [],
-          plans: [
-            { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
-            { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
-            { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
-            { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
-          ],
-          permissions: {
-            'See revenue dashboard': { Owner: true, Trainer: false, Accountant: true },
-            'Check in members': { Owner: true, Trainer: true, Accountant: false },
-            'Add & edit members': { Owner: true, Trainer: false, Accountant: false },
-            'Manage PT sessions': { Owner: true, Trainer: true, Accountant: false },
-            'Collect payments': { Owner: true, Trainer: false, Accountant: true },
-            'Record expenses': { Owner: true, Trainer: false, Accountant: true }
-          },
-          auditLog: []
-        },
-        {
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        }
-      );
-    } catch (e: any) {
-      return NextResponse.json({ error: e.message }, { status: 500 });
+      rawMembers = await prisma.member.findMany({ orderBy: { id: 'asc' } });
+      rawLeads = await prisma.lead.findMany({ orderBy: { id: 'desc' } });
+      rawTrainers = await prisma.trainer.findMany({ orderBy: { id: 'desc' } });
+      rawPayments = await prisma.payment.findMany({ orderBy: { id: 'desc' } });
+      rawExpenses = await prisma.expense.findMany({ orderBy: { id: 'desc' } });
+      gymProfile = await prisma.gymProfile.findFirst();
+    } catch (err: any) {
+      console.error('DATABASE READ ERROR:', err);
+      dbError = String(err?.message || err);
     }
+
+    const totalCount = rawMembers.length;
+    const members = (rawMembers || []).map((m: any, idx: number) => {
+      const codeNum = 1001 + idx;
+      return {
+        id: m.id,
+        name: m.name || 'Member',
+        phone: m.phone || '',
+        gender: m.gender || 'Male',
+        plan: m.plan || 'Monthly',
+        startDate: m.startDate || new Date().toISOString().split('T')[0],
+        expires: m.expires || new Date().toISOString().split('T')[0],
+        status: m.status || 'Active',
+        dues: Number(m.dues || 0),
+        dueAmount: Number(m.dues || 0),
+        code: `IT${codeNum}`,
+        daysLeft: 90,
+        paymentsCount: 1,
+        lastActivity: m.startDate || 'Recent',
+        checkInsCount: 12 + (idx % 10)
+      };
+    });
+
+    const trainers = (rawTrainers || []).map((t: any) => ({
+      id: t.id,
+      name: t.name || 'Trainer',
+      email: (t as any).email || `${t.phone}@gym.com`,
+      phone: t.phone || '',
+      specialty: t.specialty || 'Strength & HIIT',
+      active: t.active !== false
+    }));
+
+    const staff = [
+      { id: 'S1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner', active: true },
+      ...trainers.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        email: t.email,
+        phone: t.phone,
+        role: 'Trainer',
+        active: t.active
+      }))
+    ];
+
+    return NextResponse.json(
+      {
+        gymProfile: gymProfile || {
+          name: 'Iron Temple Fitness',
+          branch: 'Indiranagar, Bengaluru',
+          phone: '9845012345',
+          publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
+        },
+        billingSettings: {
+          receiptType: 'GST tax invoice',
+          gstin: '29AABCI1234F1Z8',
+          taxPercent: 18,
+          maxStaffDiscount: 20
+        },
+        members,
+        leads: rawLeads || [],
+        trainers,
+        staff,
+        payments: (rawPayments || []).map((p: any) => ({
+          id: p.id,
+          receipt: p.receipt || 'RCPT-1001',
+          member: p.member || 'Member',
+          phone: p.phone || '',
+          amount: Number(p.amount || 0),
+          method: p.method || 'Cash',
+          plan: p.plan || 'Membership',
+          note: p.note || '',
+          date: p.date || new Date().toISOString().split('T')[0]
+        })),
+        expenses: (rawExpenses || []).map((e: any) => ({
+          id: e.id,
+          title: e.title || 'Expense',
+          amount: Number(e.amount || 0),
+          category: e.category || 'General',
+          date: e.date || new Date().toISOString().split('T')[0]
+        })),
+        ptAssignments: [],
+        attendance: [],
+        enquiries: [],
+        transactions: rawPayments || [],
+        smsLogs: [],
+        plans: [
+          { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
+          { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
+          { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
+          { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
+        ],
+        permissions: {
+          'See revenue dashboard': { Owner: true, Trainer: false, Accountant: true },
+          'Check in members': { Owner: true, Trainer: true, Accountant: false },
+          'Add & edit members': { Owner: true, Trainer: false, Accountant: false },
+          'Manage PT sessions': { Owner: true, Trainer: true, Accountant: false },
+          'Collect payments': { Owner: true, Trainer: false, Accountant: true },
+          'Record expenses': { Owner: true, Trainer: false, Accountant: true }
+        },
+        auditLog: [],
+        _debugDbError: dbError
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      }
+    );
   }
 
   return NextResponse.json({ success: true });
