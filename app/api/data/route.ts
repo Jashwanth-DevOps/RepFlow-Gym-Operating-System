@@ -36,7 +36,7 @@ export async function GET() {
         daysLeft: 90,
         paymentsCount: 1,
         lastActivity: m.startDate || 'Recent',
-        checkInsCount: 14 + (idx % 8)
+        checkInsCount: 0
       };
     });
 

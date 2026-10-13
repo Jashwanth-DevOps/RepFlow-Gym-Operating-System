@@ -118,6 +118,7 @@ export default function RepFlowApp() {
 
   // Front Desk Check-in Records
     const [checkInInput, setCheckInInput] = useState('');
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [filterCheckInDate, setFilterCheckInDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
@@ -3002,9 +3003,25 @@ export default function RepFlowApp() {
               </div>
 
               <div className={`border rounded-xl overflow-hidden ${cardBg}`}>
-                <div className="p-3 border-b text-[10px] font-bold uppercase text-neutral-400">CHECK-IN LOGS BY DATE</div>
+                <div className="p-3 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-neutral-900/60">
+  <div className="flex items-center gap-2">
+    <span className="text-[11px] font-bold tracking-wider uppercase text-neutral-300">CHECK-IN HISTORY</span>
+    <span className="text-[10px] font-mono font-bold bg-[#84cc16]/20 text-[#84cc16] px-2.5 py-0.5 rounded-full">
+      {(recentCheckIns || []).filter((item: any) => (item.date || new Date().toISOString().split('T')[0]) === selectedHistoryDate).length} Checked In
+    </span>
+  </div>
+  <div className="flex items-center gap-2">
+    <span className="text-[11px] font-bold text-neutral-400">Date:</span>
+    <input
+      type="date"
+      value={selectedHistoryDate}
+      onChange={(e) => setSelectedHistoryDate(e.target.value)}
+      className="px-2.5 py-1 text-xs rounded-lg border border-neutral-700 bg-black text-[#84cc16] focus:outline-none focus:border-[#84cc16]"
+    />
+  </div>
+</div>
                 <div className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
-                  {recentCheckIns.map((item, idx) => (
+                  {(recentCheckIns || []).filter((item: any) => (item.date || new Date().toISOString().split('T')[0]) === selectedHistoryDate).map((item: any, idx: number) => (
                     <div key={idx} className="p-2.5 flex justify-between items-center text-xs">
                       <div><div className={`font-bold ${textColor}`}>{item.name}</div><div className={`text-[10px] ${subTextColor}`}>{item.memberCode || item.code || "IT1001"}</div></div>
                       <span className="font-mono text-[#84cc16] font-bold">{item.time}</span>
@@ -3029,7 +3046,7 @@ export default function RepFlowApp() {
             <div className="flex justify-between items-start">
               <div>
                 <h3 className={`text-base sm:text-lg font-bold ${textColor}`}>{selectedMemberProfile.name}</h3>
-                <p className={subTextColor}>{selectedMemberProfile.id} • +91 {selectedMemberProfile.phone}</p>
+                <p className={subTextColor}>{selectedMemberProfile.code || "IT1001"} • +91 {selectedMemberProfile.phone}</p>
               </div>
               <button onClick={() => setSelectedMemberProfile(null)}><X className="w-4 h-4 text-neutral-400" /></button>
             </div>
