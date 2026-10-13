@@ -2342,7 +2342,7 @@ export default function RepFlowApp() {
 
                   <div className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
                     {(dbData?.members || []).filter((m: any) => m.dues > 0 || getDaysLeft(m.expires) <= 7).map((item: any) => (
-                      <div key={item.id} className="p-3 space-y-2">
+                      <div key={item.memberCode || item.code || "IT1001"} className="p-3 space-y-2">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className={`font-bold text-xs flex items-center gap-1.5 ${textColor}`}>
@@ -3002,11 +3002,11 @@ export default function RepFlowApp() {
               </div>
 
               <div className={`border rounded-xl overflow-hidden ${cardBg}`}>
-                <div className="p-3 border-b text-[10px] font-bold uppercase text-neutral-400">Recent check-in list (Today)</div>
+                <div className="p-3 border-b text-[10px] font-bold uppercase text-neutral-400">CHECK-IN LOGS BY DATE</div>
                 <div className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
                   {recentCheckIns.map((item, idx) => (
                     <div key={idx} className="p-2.5 flex justify-between items-center text-xs">
-                      <div><div className={`font-bold ${textColor}`}>{item.name}</div><div className={`text-[10px] ${subTextColor}`}>{item.id}</div></div>
+                      <div><div className={`font-bold ${textColor}`}>{item.name}</div><div className={`text-[10px] ${subTextColor}`}>{item.memberCode || item.code || "IT1001"}</div></div>
                       <span className="font-mono text-[#84cc16] font-bold">{item.time}</span>
                     </div>
                   ))}
@@ -3035,7 +3035,7 @@ export default function RepFlowApp() {
             </div>
             <div className={`grid grid-cols-2 gap-2.5 py-2 border-y ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
               <div><span className="text-neutral-400">Plan:</span> <strong className={`block mt-0.5 ${textColor}`}>{selectedMemberProfile.plan}</strong></div>
-              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{selectedMember?.checkInsCount || 14} days</span></div>
+              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{selectedMemberProfile?.checkInsCount || 14} days</span></div>
 <span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
