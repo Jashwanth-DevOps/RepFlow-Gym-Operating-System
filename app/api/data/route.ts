@@ -10,14 +10,32 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function GET() {
   try {
-    const [rawMembers, rawLeads, rawTrainers, rawPayments, rawExpenses, gymProfile] = await Promise.all([
-      prisma.member.findMany({ orderBy: { id: 'asc' } }).catch(() => []),
-      prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-      prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-      prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-      prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []),
-      prisma.gymProfile.findFirst().catch(() => null)
-    ]);
+    const rawMembers = await prisma.member.findMany({ orderBy: { id: 'asc' } }).catch(() => []);
+    const rawLeads = await prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
+    const rawTrainers = await prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
+    const rawPayments = await prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
+    const rawExpenses = await prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
+    const gymProfile = await prisma.gymProfile.findFirst().catch(() => null);
+
+    let rawAttendance: any[] = [];
+    try {
+      rawAttendance = await prisma.$queryRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "attendance" (
+          "id" TEXT PRIMARY KEY,
+          "memberId" TEXT NOT NULL,
+          "memberCode" TEXT,
+          "memberName" TEXT NOT NULL,
+          "plan" TEXT,
+          "phone" TEXT,
+          "date" TEXT NOT NULL,
+          "time" TEXT NOT NULL,
+          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        SELECT * FROM "attendance" ORDER BY "createdAt" DESC;
+      `);
+    } catch (e) {
+      rawAttendance = [];
+    }
 
     const members = (rawMembers || []).map((m: any, idx: number) => {
       const codeNum = 1001 + idx;
@@ -35,8 +53,7 @@ export async function GET() {
         code: `IT${codeNum}`,
         daysLeft: 90,
         paymentsCount: 1,
-        lastActivity: m.startDate || 'Recent',
-        checkInsCount: 0
+        lastActivity: m.startDate || 'Recent'
       };
     });
 
@@ -102,7 +119,7 @@ export async function GET() {
         payments,
         expenses,
         ptAssignments: [],
-        attendance: [],
+        attendance: Array.isArray(rawAttendance) ? rawAttendance : [],
         enquiries: [],
         transactions: payments,
         smsLogs: [],
