@@ -3052,7 +3052,7 @@ export default function RepFlowApp() {
             </div>
             <div className={`grid grid-cols-2 gap-2.5 py-2 border-y ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
               <div><span className="text-neutral-400">Plan:</span> <strong className={`block mt-0.5 ${textColor}`}>{selectedMemberProfile.plan}</strong></div>
-              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{selectedMemberProfile?.checkInsCount || 14} days</span></div>
+              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{((recentCheckIns || []).filter((c: any) => c.memberCode === selectedMemberProfile?.code || c.memberId === selectedMemberProfile?.id).length + ((dbData?.attendance || []).filter((a: any) => a.memberId === selectedMemberProfile?.id).length))} days</span></div>
 <span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
