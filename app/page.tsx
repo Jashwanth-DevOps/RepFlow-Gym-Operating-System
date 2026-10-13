@@ -117,7 +117,35 @@ export default function RepFlowApp() {
   const [payMemberSearch, setPayMemberSearch] = useState('');
 
   // Front Desk Check-in Records
-  const [checkInInput, setCheckInInput] = useState('');
+    const [checkInInput, setCheckInInput] = useState('');
+  const [filterCheckInDate, setFilterCheckInDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    const fetchNeonRecords = async () => {
+      try {
+        const res = await fetch('/api/data?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.members) {
+            setDbData((prev: any) => ({
+              ...prev,
+              ...json,
+              members: Array.isArray(json.members) ? json.members : (prev?.members || []),
+              leads: Array.isArray(json.leads) ? json.leads : (prev?.leads || []),
+              trainers: Array.isArray(json.trainers) ? json.trainers : (prev?.trainers || []),
+              payments: Array.isArray(json.payments) ? json.payments : (prev?.payments || [])
+            }));
+          }
+        }
+      } catch (e) {
+        console.error('Data sync error:', e);
+      }
+    };
+    fetchNeonRecords();
+  }, []);
   const [recentCheckIns, setRecentCheckIns] = useState<any[]>([]);
   const [checkInNotice, setCheckInNotice] = useState<any>(null);
 
@@ -1925,7 +1953,7 @@ export default function RepFlowApp() {
                       const ptRecord = (dbData?.ptAssignments || []).find((p: any) => p.member?.toLowerCase() === m.name?.toLowerCase());
                       return (
                         <tr key={m.id} onClick={() => setSelectedMemberProfile(m)} className="hover:bg-[#84cc16]/5 cursor-pointer">
-                          <td className="p-2.5 sm:p-3 font-semibold">{m.name} <br/><span className="text-[10px] text-neutral-400 font-normal">{m.id} • {m.phone}</span></td>
+                          <td className="p-2.5 sm:p-3 font-semibold">{m.name} <br/><span className="text-[10px] text-neutral-400 font-normal">{m.code || "IT1001"} • {m.phone}</span></td>
                           {isTrainer ? (
                             <>
                               <td className="p-2.5 sm:p-3 font-mono text-[#84cc16] font-bold">{ptRecord?.sessions || 12} sessions</td>
