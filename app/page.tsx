@@ -495,7 +495,7 @@ export default function RepFlowApp() {
       return;
     }
 
-    const match = (dbData?.members || []).find((m: any) => m.id.toLowerCase() === cleaned.toLowerCase());
+    const match = (dbData?.members || []).find((m: any) => (((m?.code || m?.id || "").toLowerCase())) === cleaned.toLowerCase());
 
     if (!match) {
       setCheckInNotice({ type: 'error', message: `No active member found with ID "${cleaned}".` });
@@ -1834,7 +1834,7 @@ export default function RepFlowApp() {
                     {(dbData?.members || []).slice(0, 4).map((m: any, i: number) => (
                       <div key={m.code || "IT1001"} className={`flex justify-between items-center p-2 rounded-xl border ${innerBg}`}>
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-[#84cc16]/20 text-[#84cc16] flex items-center justify-center font-bold text-[10px]">{m.name.charAt(0)}</span>
+                          <span className="w-6 h-6 rounded-full bg-[#84cc16]/20 text-[#84cc16] flex items-center justify-center font-bold text-[10px]">{(m?.name ? m.name.charAt(0) : "M")}</span>
                           <div>
                             <strong className={textColor}>{m.name}</strong>
                             <p className={`text-[9px] ${subTextColor}`}>Dues: ₹{m.dues} • {m.plan}</p>
@@ -1946,9 +1946,9 @@ export default function RepFlowApp() {
                       if (memberFilter === 'Cancelled') return m.status === 'Cancelled';
                       return true;
                     }).filter((m: any) => {
-                      return m.name.toLowerCase().includes(memberSearch.toLowerCase()) || 
-                             m.phone.includes(memberSearch) || 
-                             m.id.toLowerCase().includes(memberSearch.toLowerCase());
+                      return ((m?.name || "").toLowerCase()).includes(memberSearch.toLowerCase()) || 
+                             ((m?.phone || "").includes)(memberSearch) || 
+                             (((m?.code || m?.id || "").toLowerCase())).includes(memberSearch.toLowerCase());
                     }).map((m: any) => {
                       const ptRecord = (dbData?.ptAssignments || []).find((p: any) => p.member?.toLowerCase() === m.name?.toLowerCase());
                       return (
@@ -3581,7 +3581,7 @@ export default function RepFlowApp() {
               </div>
               <label className="text-neutral-400 block mt-2">Select Filtered Member</label>
               <select name="ptMember" className={`w-full mt-1 px-3 py-2 border rounded-lg font-semibold ${innerBg} ${textColor}`}>
-                {(dbData?.members || []).filter((m: any) => m.name.toLowerCase().includes(ptMemberSearch.toLowerCase())).map((m: any) => (
+                {(dbData?.members || []).filter((m: any) => ((m?.name || "").toLowerCase()).includes(ptMemberSearch.toLowerCase())).map((m: any) => (
                   <option key={m.code || "IT1001"} value={m.name}>{m.name} ({m.phone})</option>
                 ))}
               </select>
@@ -3707,7 +3707,7 @@ export default function RepFlowApp() {
 
               {payMemberSearch.trim() && (
                 <div className={`mt-1 max-h-28 overflow-y-auto border rounded-lg divide-y ${innerBg}`}>
-                  {(dbData?.members || []).filter((m: any) => m.name.toLowerCase().includes(payMemberSearch.toLowerCase())).map((m: any) => (
+                  {(dbData?.members || []).filter((m: any) => ((m?.name || "").toLowerCase()).includes(payMemberSearch.toLowerCase())).map((m: any) => (
                     <div 
                       key={m.code || "IT1001"} 
                       onClick={() => {
