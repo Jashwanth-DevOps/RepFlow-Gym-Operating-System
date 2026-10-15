@@ -17,19 +17,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Email and new password required.' }, { status: 400 });
     }
 
-    // Update in User table
+    // 1. Update or create in User table
     await prisma.user.upsert({
       where: { email: cleanEmail },
       update: { password: cleanPass },
       create: {
         email: cleanEmail,
         password: cleanPass,
-        name: cleanEmail === 'owner@gym.com' ? 'Gym Owner' : 'Staff',
+        name: cleanEmail === 'owner@gym.com' ? 'Gym Owner' : 'Trainer',
         role: cleanEmail === 'owner@gym.com' ? 'OWNER' : 'TRAINER'
       }
     });
 
-    return NextResponse.json({ success: true, message: 'Password updated in database successfully.' });
+    // 2. Also update in Trainer table if it exists
+    await prisma.$executeRawUnsafe(
+      `UPDATE "Trainer" SET "password" = $1 WHERE LOWER("email") = $2`,
+      cleanPass, cleanEmail
+    ).catch(() => null);
+
+    return NextResponse.json({ success: true, message: 'Password updated successfully.' });
   } catch (e: any) {
     return NextResponse.json({ success: false, message: e.message }, { status: 500 });
   }
