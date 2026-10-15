@@ -355,7 +355,7 @@ export default function RepFlowApp() {
 
   const isTrainer = activeUser.role === 'Trainer';
   const trainerAssignedMembers = (dbData?.ptAssignments || [])
-    .filter((pt: any) => pt.trainer?.toLowerCase() === activeUser.name?.toLowerCase())
+    .filter((pt: any) => pt.trainer?.toLowerCase() === activeUser?.name?.toLowerCase())
     .map((pt: any) => pt.member?.toLowerCase());
 
   // Real-Time 30-Day Timeline Data Generator
@@ -1951,7 +1951,7 @@ export default function RepFlowApp() {
                              ((m?.phone || "").includes)(memberSearch) || 
                              (((m?.code || m?.id || "").toLowerCase())).includes(memberSearch.toLowerCase());
                     }).map((m: any) => {
-                      const ptRecord = (dbData?.ptAssignments || []).find((p: any) => p.member?.toLowerCase() === m.name?.toLowerCase());
+                      const ptRecord = (dbData?.ptAssignments || []).find((p: any) => (p.member || "").toLowerCase() === (m.name || "").toLowerCase());
                       return (
                         <tr key={m.code || "IT1001"} onClick={() => setSelectedMemberProfile(m)} className="hover:bg-[#84cc16]/5 cursor-pointer">
                           <td className="p-2.5 sm:p-3 font-semibold">{m.name} <br/><span className="text-[10px] text-neutral-400 font-normal">{m.code || "IT1001"} • {m.phone}</span></td>
@@ -1997,7 +1997,7 @@ export default function RepFlowApp() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
                 {['New', 'Contacted', 'Trial', 'Negotiating', 'Converted', 'Lost'].map(stage => {
-                  const sLeads = (dbData?.leads || []).filter((l: any) => l.stage.toLowerCase() === stage.toLowerCase());
+                  const sLeads = (dbData?.leads || []).filter((l: any) => (l.stage || "").toLowerCase() === stage.toLowerCase());
                   return (
                     <div key={stage} className={`p-2.5 rounded-xl border space-y-2 min-h-[160px] ${cardBg}`}>
                       <div className="flex justify-between items-center text-xs font-bold text-neutral-400 pb-1 border-b border-neutral-800">
@@ -2057,7 +2057,7 @@ export default function RepFlowApp() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {(dbData?.trainers || [])
-                  .filter((tr: any) => isTrainer ? tr.name?.toLowerCase() === activeUser.name?.toLowerCase() : true)
+                  .filter((tr: any) => isTrainer ? tr.name?.toLowerCase() === activeUser?.name?.toLowerCase() : true)
                   .filter((tr: any) => tr.name.toLowerCase().includes(trainerSearch.toLowerCase())).map((trainer: any) => (
                     <div key={trainer.id} className={`p-4 rounded-xl border space-y-2.5 ${cardBg}`}>
                       <div className="flex justify-between items-start">
@@ -2101,7 +2101,7 @@ export default function RepFlowApp() {
                   </thead>
                   <tbody className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
                     {(dbData?.ptAssignments || [])
-                      .filter((pt: any) => isTrainer ? pt.trainer?.toLowerCase() === activeUser.name?.toLowerCase() : true)
+                      .filter((pt: any) => isTrainer ? pt.trainer?.toLowerCase() === activeUser?.name?.toLowerCase() : true)
                       .map((pt: any) => (
                         <tr key={pt.id}>
                           <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{pt.member}</td>
@@ -2662,7 +2662,7 @@ export default function RepFlowApp() {
                   <span className={`font-bold ${textColor}`}>Lead funnel</span>
                   <div className="space-y-3 pt-2">
                     {['New', 'Contacted', 'Trial', 'Negotiating', 'Converted'].map((stage) => {
-                      const count = (dbData?.leads || []).filter((l: any) => l.stage.toLowerCase() === stage.toLowerCase()).length;
+                      const count = (dbData?.leads || []).filter((l: any) => (l.stage || "").toLowerCase() === stage.toLowerCase()).length;
                       return (
                         <div key={stage}>
                           <div className="flex justify-between text-[11px] mb-1">
@@ -3052,7 +3052,7 @@ export default function RepFlowApp() {
             </div>
             <div className={`grid grid-cols-2 gap-2.5 py-2 border-y ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
               <div><span className="text-neutral-400">Plan:</span> <strong className={`block mt-0.5 ${textColor}`}>{selectedMemberProfile.plan}</strong></div>
-              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{((dbData?.attendance || recentCheckIns || []).filter((a: any) => (a.memberCode && selectedMemberProfile?.code && a.memberCode === selectedMemberProfile.code) || (a.memberName && selectedMemberProfile?.name && a.memberName.toLowerCase() === selectedMemberProfile.name.toLowerCase()) || (a.memberId && selectedMemberProfile?.id && a.memberId === selectedMemberProfile.id)).length)} days</span></div>
+              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{((dbData?.attendance || recentCheckIns || []).filter((a: any) => (a.memberCode && selectedMemberProfile?.code && a.memberCode === selectedMemberProfile.code) || (a.memberName && selectedMemberProfile?.name && (a.memberName || "").toLowerCase() === (selectedMemberProfile?.name || "").toLowerCase()) || (a.memberId && selectedMemberProfile?.id && a.memberId === selectedMemberProfile.id)).length)} days</span></div>
 <span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
