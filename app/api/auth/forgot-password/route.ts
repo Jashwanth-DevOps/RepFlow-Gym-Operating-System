@@ -14,10 +14,9 @@ export async function POST(request: Request) {
     const cleanPass = (newPassword || '').trim();
 
     if (!cleanEmail || !cleanPass) {
-      return NextResponse.json({ success: false, message: 'Email and new password required.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Email and new password required' }, { status: 400 });
     }
 
-    // 1. Update or create in User table
     await prisma.user.upsert({
       where: { email: cleanEmail },
       update: { password: cleanPass },
@@ -29,14 +28,19 @@ export async function POST(request: Request) {
       }
     });
 
-    // 2. Also update in Trainer table if it exists
-    await prisma.$executeRawUnsafe(
-      `UPDATE "Trainer" SET "password" = $1 WHERE LOWER("email") = $2`,
-      cleanPass, cleanEmail
-    ).catch(() => null);
+    const trainers = await prisma.trainer.findMany().catch(() => []);
+    for (const t of trainers) {
+      const te = ((t as any).email || `${t.phone}@gym.com`).toLowerCase().trim();
+      if (te === cleanEmail || t.phone === cleanEmail) {
+        await prisma.$executeRawUnsafe(
+          `UPDATE "Trainer" SET "password" = $1 WHERE "id" = $2`,
+          cleanPass, t.id
+        ).catch(() => null);
+      }
+    }
 
-    return NextResponse.json({ success: true, message: 'Password updated successfully.' });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Password reset successfully!' });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }

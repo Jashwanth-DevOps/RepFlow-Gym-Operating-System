@@ -485,7 +485,7 @@ export default function RepFlowApp() {
   };
 
   // Front Desk Check-in Handler
-  const handleFrontDeskCheckIn = (inputVal: string) => {
+  const handleFrontDeskCheckIn = async (inputVal: string) => {
     setCheckInNotice(null);
     const cleaned = inputVal.trim();
     if (!cleaned) return;

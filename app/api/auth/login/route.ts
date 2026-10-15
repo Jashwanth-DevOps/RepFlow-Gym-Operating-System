@@ -14,11 +14,16 @@ export async function POST(request: Request) {
     const password = (body.password || '').trim();
 
     if (!email || !password) {
-      return NextResponse.json({ success: false, message: 'Email and password are required.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Email and password required' }, { status: 400 });
     }
 
-    // Always check User table first as it holds updated credentials
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Check user table
+    const user = await prisma.user.findFirst({
+      where: {
+        email: { equals: email, mode: 'insensitive' }
+      }
+    });
+
     if (user) {
       if (user.password !== password) {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
@@ -29,37 +34,37 @@ export async function POST(request: Request) {
           id: user.id,
           name: user.name || 'User',
           email: user.email,
-          role: user.role === 'OWNER' ? 'Owner' : user.role === 'TRAINER' ? 'Trainer' : user.role === 'ACCOUNTANT' ? 'Accountant' : 'Staff'
+          role: user.role === 'OWNER' ? 'Owner' : user.role === 'TRAINER' ? 'Trainer' : 'Staff'
         }
       });
     }
 
-    // Default owner fallback
+    // Default owner fallback if user table does not have it yet
     if (email === 'owner@gym.com') {
       if (password !== 'password123') {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: { id: 'owner_1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' }
+        user: { id: 'owner_default', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' }
       });
     }
 
     // Check trainer table
     const trainers = await prisma.trainer.findMany().catch(() => []);
-    const matchTrainer: any = trainers.find((t: any) => {
-      const tEmail = ((t as any).email || `${t.phone}@gym.com`).toLowerCase();
-      return tEmail === email || t.phone === email;
+    const match = trainers.find((t: any) => {
+      const te = ((t as any).email || `${t.phone}@gym.com`).toLowerCase().trim();
+      return te === email || t.phone === email;
     });
 
-    if (matchTrainer) {
-      const expectedPassword = matchTrainer.password || 'password123';
-      if (password !== expectedPassword) {
-        return NextResponse.json({ success: false, message: 'Invalid password.' }, { status: 401 });
+    if (match) {
+      const matchPass = (match as any).password || 'password123';
+      if (password !== matchPass) {
+        return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: { id: matchTrainer.id, name: matchTrainer.name, email: email, role: 'Trainer' }
+        user: { id: match.id, name: match.name, email: email, role: 'Trainer' }
       });
     }
 
