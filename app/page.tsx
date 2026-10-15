@@ -3007,7 +3007,7 @@ export default function RepFlowApp() {
   <div className="flex items-center gap-2">
     <span className="text-[11px] font-bold tracking-wider uppercase text-neutral-300">CHECK-IN HISTORY</span>
     <span className="text-[10px] font-mono font-bold bg-[#84cc16]/20 text-[#84cc16] px-2.5 py-0.5 rounded-full">
-      {(recentCheckIns || []).filter((item: any) => (item.date || new Date().toISOString().split('T')[0]) === selectedHistoryDate).length} Checked In
+      {(recentCheckIns || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).length} Checked In
     </span>
   </div>
   <div className="flex items-center gap-2">
@@ -3021,7 +3021,7 @@ export default function RepFlowApp() {
   </div>
 </div>
                 <div className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
-                  {(recentCheckIns || []).filter((item: any) => (item.date || new Date().toISOString().split('T')[0]) === selectedHistoryDate).map((item: any, idx: number) => (
+                  {(recentCheckIns || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).map((item: any, idx: number) => (
                     <div key={idx} className="p-2.5 flex justify-between items-center text-xs">
                       <div><div className={`font-bold ${textColor}`}>{item.name}</div><div className={`text-[10px] ${subTextColor}`}>{item.memberCode || item.code || "IT1001"}</div></div>
                       <span className="font-mono text-[#84cc16] font-bold">{item.time}</span>
@@ -3052,7 +3052,7 @@ export default function RepFlowApp() {
             </div>
             <div className={`grid grid-cols-2 gap-2.5 py-2 border-y ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
               <div><span className="text-neutral-400">Plan:</span> <strong className={`block mt-0.5 ${textColor}`}>{selectedMemberProfile.plan}</strong></div>
-              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{((dbData?.attendance || []).filter((a: any) => (a.memberId === selectedMemberProfile?.id || a.memberCode === selectedMemberProfile?.code || (a.memberName && selectedMemberProfile?.name && a.memberName.trim().toLowerCase() === selectedMemberProfile.name.trim().toLowerCase()))).length)} days</span></div>
+              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{((dbData?.attendance || []).filter((a: any) => a.memberId === selectedMemberProfile?.id || a.memberCode === selectedMemberProfile?.code || (a.memberName && selectedMemberProfile?.name && a.memberName.trim().toLowerCase() === selectedMemberProfile.name.trim().toLowerCase())).length)} days</span></div>
 <span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
