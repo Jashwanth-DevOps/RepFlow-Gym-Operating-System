@@ -14,26 +14,25 @@ export async function POST(request: Request) {
     const cleanPassword = (newPassword || '').trim();
 
     if (!cleanEmail || !cleanPassword) {
-      return NextResponse.json({ error: 'Email and new password are required.' }, { status: 400 });
+      return NextResponse.json({ error: 'Email and new password are required' }, { status: 400 });
     }
 
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "gym_credentials" (
-        "email" TEXT PRIMARY KEY,
-        "password" TEXT NOT NULL,
-        "role" TEXT NOT NULL,
-        "name" TEXT NOT NULL
-      )
-    `).catch(() => null);
+    if (cleanEmail === 'owner@gym.com') {
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "owner_auth" ("email", "password") VALUES ($1, $2)
+         ON CONFLICT ("email") DO UPDATE SET "password" = $2`,
+        cleanEmail, cleanPassword
+      );
+      return NextResponse.json({ success: true, message: 'Owner password reset successfully' });
+    }
 
-    await prisma.$executeRawUnsafe(`
-      INSERT INTO "gym_credentials" ("email", "password", "role", "name")
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT ("email") DO UPDATE SET "password" = $2
-    `, cleanEmail, cleanPassword, cleanEmail === 'owner@gym.com' ? 'Owner' : 'Trainer', cleanEmail === 'owner@gym.com' ? 'Gym Owner' : 'Staff');
+    await prisma.$executeRawUnsafe(
+      `UPDATE "trainer_auth" SET "password" = $1 WHERE LOWER("email") = $2`,
+      cleanPassword, cleanEmail
+    );
 
-    return NextResponse.json({ success: true, message: 'Password updated successfully.' });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ success: true, message: 'Password reset successfully' });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

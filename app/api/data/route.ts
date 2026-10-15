@@ -21,10 +21,8 @@ export async function GET() {
       CREATE TABLE IF NOT EXISTS "attendance" (
         "id" TEXT PRIMARY KEY,
         "memberId" TEXT NOT NULL,
-        "memberCode" TEXT,
+        "memberCode" TEXT NOT NULL,
         "memberName" TEXT NOT NULL,
-        "plan" TEXT,
-        "phone" TEXT,
         "date" TEXT NOT NULL,
         "time" TEXT NOT NULL,
         "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -105,20 +103,14 @@ export async function GET() {
       expenses,
       ptAssignments: [],
       attendance: Array.isArray(rawAttendance) ? rawAttendance : [],
-      enquiries: [],
-      transactions: payments,
-      smsLogs: [],
       plans: [
         { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
         { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
         { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
         { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
-      ],
-      auditLog: []
+      ]
     }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
-      }
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
