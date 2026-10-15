@@ -17,28 +17,26 @@ export async function GET() {
     const rawExpenses = await prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
     const gymProfile = await prisma.gymProfile.findFirst().catch(() => null);
 
-    let rawAttendance: any[] = [];
-    try {
-      rawAttendance = await prisma.$queryRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS "attendance" (
-          "id" TEXT PRIMARY KEY,
-          "memberId" TEXT NOT NULL,
-          "memberCode" TEXT,
-          "memberName" TEXT NOT NULL,
-          "plan" TEXT,
-          "phone" TEXT,
-          "date" TEXT NOT NULL,
-          "time" TEXT NOT NULL,
-          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-        SELECT * FROM "attendance" ORDER BY "createdAt" DESC;
-      `);
-    } catch (e) {
-      rawAttendance = [];
-    }
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "attendance" (
+        "id" TEXT PRIMARY KEY,
+        "memberId" TEXT NOT NULL,
+        "memberCode" TEXT,
+        "memberName" TEXT NOT NULL,
+        "plan" TEXT,
+        "phone" TEXT,
+        "date" TEXT NOT NULL,
+        "time" TEXT NOT NULL,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => null);
+
+    const rawAttendance: any[] = await prisma.$queryRawUnsafe(`
+      SELECT * FROM "attendance" ORDER BY "createdAt" DESC
+    `).catch(() => []);
 
     const members = (rawMembers || []).map((m: any, idx: number) => {
-      const codeNum = 1001 + idx;
+      const code = `IT${1001 + idx}`;
       return {
         id: m.id,
         name: m.name || 'Member',
@@ -50,7 +48,7 @@ export async function GET() {
         status: m.status || 'Active',
         dues: Number(m.dues || 0),
         dueAmount: Number(m.dues || 0),
-        code: `IT${codeNum}`,
+        code: code,
         daysLeft: 90,
         paymentsCount: 1,
         lastActivity: m.startDate || 'Recent'
@@ -62,21 +60,10 @@ export async function GET() {
       name: t.name || 'Trainer',
       email: (t as any).email || `${t.phone}@gym.com`,
       phone: t.phone || '',
+      password: (t as any).password || 'password123',
       specialty: t.specialty || 'Strength & Conditioning',
       active: t.active !== false
     }));
-
-    const staff = [
-      { id: 'S1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner', active: true },
-      ...trainers.map((t: any) => ({
-        id: t.id,
-        name: t.name,
-        email: t.email,
-        phone: t.phone,
-        role: 'Trainer',
-        active: t.active
-      }))
-    ];
 
     const payments = (rawPayments || []).map((p: any) => ({
       id: p.id,
@@ -98,55 +85,41 @@ export async function GET() {
       date: e.date || new Date().toISOString().split('T')[0]
     }));
 
-    return NextResponse.json(
-      {
-        gymProfile: gymProfile || {
-          name: 'Iron Temple Fitness',
-          branch: 'Indiranagar, Bengaluru',
-          phone: '9845012345',
-          publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
-        },
-        billingSettings: {
-          receiptType: 'GST tax invoice',
-          gstin: '29AABCI1234F1Z8',
-          taxPercent: 18,
-          maxStaffDiscount: 20
-        },
-        members,
-        leads: rawLeads || [],
-        trainers,
-        staff,
-        payments,
-        expenses,
-        ptAssignments: [],
-        attendance: Array.isArray(rawAttendance) ? rawAttendance : [],
-        enquiries: [],
-        transactions: payments,
-        smsLogs: [],
-        plans: [
-          { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
-          { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
-          { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
-          { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
-        ],
-        permissions: {
-          'See revenue dashboard': { Owner: true, Trainer: false, Accountant: true },
-          'Check in members': { Owner: true, Trainer: true, Accountant: false },
-          'Add & edit members': { Owner: true, Trainer: false, Accountant: false },
-          'Manage PT sessions': { Owner: true, Trainer: true, Accountant: false },
-          'Collect payments': { Owner: true, Trainer: false, Accountant: true },
-          'Record expenses': { Owner: true, Trainer: false, Accountant: true }
-        },
-        auditLog: []
+    return NextResponse.json({
+      gymProfile: gymProfile || {
+        name: 'Iron Temple Fitness',
+        branch: 'Indiranagar, Bengaluru',
+        phone: '9845012345',
+        publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
       },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+      billingSettings: {
+        receiptType: 'GST tax invoice',
+        gstin: '29AABCI1234F1Z8',
+        taxPercent: 18,
+        maxStaffDiscount: 20
+      },
+      members,
+      leads: rawLeads || [],
+      trainers,
+      payments,
+      expenses,
+      ptAssignments: [],
+      attendance: Array.isArray(rawAttendance) ? rawAttendance : [],
+      enquiries: [],
+      transactions: payments,
+      smsLogs: [],
+      plans: [
+        { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
+        { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
+        { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
+        { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
+      ],
+      auditLog: []
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
       }
-    );
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

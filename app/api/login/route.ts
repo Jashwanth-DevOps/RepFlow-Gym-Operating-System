@@ -1,51 +1,71 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await request.json();
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
-    }
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "gym_credentials" (
+        "email" TEXT PRIMARY KEY,
+        "password" TEXT NOT NULL,
+        "role" TEXT NOT NULL,
+        "name" TEXT NOT NULL
+      )
+    `).catch(() => null);
 
-    // Search user in database
-    const user = await (prisma as any).user.findFirst({
-      where: { email: email.toLowerCase().trim() },
-    });
+    const creds: any[] = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "gym_credentials" WHERE LOWER("email") = $1`, cleanEmail
+    ).catch(() => []);
 
-    if (!user) {
-      // If no user found, auto-create the owner account so your demo never fails
-      const newUser = await (prisma as any).user.create({
-        data: {
-          email: email.toLowerCase().trim(),
-          passwordHash: '$2a$12$K1dJvG0P5FvjUjY0Jg0eXeOqY9FkX5sF4vR1mJ8bV3zT2kL4nQ8x6',
-          name: 'Gym Admin',
-          role: 'ADMIN',
-          gymId: 'gym-1',
-        },
+    if (cleanEmail === 'owner@gym.com') {
+      const expectedPassword = creds.length > 0 ? creds[0].password : 'password123';
+      if (cleanPassword !== expectedPassword) {
+        return NextResponse.json({ error: 'Invalid password. Please check your password.' }, { status: 401 });
+      }
+      return NextResponse.json({
+        success: true,
+        user: { name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' }
       });
-      return NextResponse.json({ success: true, user: newUser });
     }
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
+    if (creds.length > 0) {
+      if (creds[0].password !== cleanPassword) {
+        return NextResponse.json({ error: 'Invalid password.' }, { status: 401 });
+      }
+      return NextResponse.json({
+        success: true,
+        user: { name: creds[0].name, email: creds[0].email, role: creds[0].role }
+      });
+    }
+
+    const trainers = await prisma.trainer.findMany().catch(() => []);
+    const matchTrainer: any = trainers.find((t: any) => {
+      const tEmail = ((t as any).email || `${t.phone}@gym.com`).toLowerCase();
+      return tEmail === cleanEmail || (t.phone && t.phone === cleanEmail);
     });
-  } catch (err: any) {
-    console.error(err);
-    // Fallback demo user session so client demonstration is never blocked
-    return NextResponse.json({
-      success: true,
-      user: { id: 'admin-1', email: 'owner@gym.com', name: 'Gym Owner', role: 'ADMIN' },
-    });
+
+    if (matchTrainer) {
+      const tPass = matchTrainer.password || 'password123';
+      if (cleanPassword !== tPass) {
+        return NextResponse.json({ error: 'Invalid password for trainer.' }, { status: 401 });
+      }
+      return NextResponse.json({
+        success: true,
+        user: { name: matchTrainer.name, email: matchTrainer.email || cleanEmail, role: 'Trainer' }
+      });
+    }
+
+    return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

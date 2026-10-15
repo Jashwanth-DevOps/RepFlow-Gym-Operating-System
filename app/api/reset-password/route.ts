@@ -1,51 +1,39 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, newPassword } = await request.json();
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (newPassword || '').trim();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
+    if (!cleanEmail || !cleanPassword) {
+      return NextResponse.json({ error: 'Email and new password are required.' }, { status: 400 });
     }
 
-    // Search user in database
-    const user = await (prisma as any).user.findFirst({
-      where: { email: email.toLowerCase().trim() },
-    });
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "gym_credentials" (
+        "email" TEXT PRIMARY KEY,
+        "password" TEXT NOT NULL,
+        "role" TEXT NOT NULL,
+        "name" TEXT NOT NULL
+      )
+    `).catch(() => null);
 
-    if (!user) {
-      // If no user found, auto-create the owner account so your demo never fails
-      const newUser = await (prisma as any).user.create({
-        data: {
-          email: email.toLowerCase().trim(),
-          passwordHash: '$2a$12$K1dJvG0P5FvjUjY0Jg0eXeOqY9FkX5sF4vR1mJ8bV3zT2kL4nQ8x6',
-          name: 'Gym Admin',
-          role: 'ADMIN',
-          gymId: 'gym-1',
-        },
-      });
-      return NextResponse.json({ success: true, user: newUser });
-    }
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "gym_credentials" ("email", "password", "role", "name")
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT ("email") DO UPDATE SET "password" = $2
+    `, cleanEmail, cleanPassword, cleanEmail === 'owner@gym.com' ? 'Owner' : 'Trainer', cleanEmail === 'owner@gym.com' ? 'Gym Owner' : 'Staff');
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    });
-  } catch (err: any) {
-    console.error(err);
-    // Fallback demo user session so client demonstration is never blocked
-    return NextResponse.json({
-      success: true,
-      user: { id: 'admin-1', email: 'owner@gym.com', name: 'Gym Owner', role: 'ADMIN' },
-    });
+    return NextResponse.json({ success: true, message: 'Password updated successfully.' });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
