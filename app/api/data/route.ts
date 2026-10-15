@@ -16,6 +16,7 @@ export async function GET() {
     const rawPayments = await prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
     const rawExpenses = await prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
     const gymProfile = await prisma.gymProfile.findFirst().catch(() => null);
+    const users = await prisma.user.findMany().catch(() => []);
 
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "attendance" (
@@ -33,35 +34,54 @@ export async function GET() {
       SELECT * FROM "attendance" ORDER BY "createdAt" DESC
     `).catch(() => []);
 
-    const members = (rawMembers || []).map((m: any, idx: number) => {
-      const code = `IT${1001 + idx}`;
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "pt_assignments" (
+        "id" TEXT PRIMARY KEY,
+        "trainer" TEXT NOT NULL,
+        "member" TEXT NOT NULL,
+        "sessions" INTEGER NOT NULL DEFAULT 12,
+        "price" DOUBLE PRECISION NOT NULL DEFAULT 6000,
+        "method" TEXT NOT NULL DEFAULT 'UPI',
+        "startDate" TEXT NOT NULL,
+        "endDate" TEXT NOT NULL,
+        "operator" TEXT,
+        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => null);
+
+    const rawPT: any[] = await prisma.$queryRawUnsafe(`
+      SELECT * FROM "pt_assignments" ORDER BY "createdAt" DESC
+    `).catch(() => []);
+
+    const members = (rawMembers || []).map((m: any, idx: number) => ({
+      id: m.id,
+      name: m.name || 'Member',
+      phone: m.phone || '',
+      gender: m.gender || 'Male',
+      plan: m.plan || 'Quarterly',
+      startDate: m.startDate || new Date().toISOString().split('T')[0],
+      expires: m.expires || new Date().toISOString().split('T')[0],
+      status: m.status || 'Active',
+      dues: Number(m.dues || 0),
+      dueAmount: Number(m.dues || 0),
+      code: `IT${1001 + idx}`,
+      daysLeft: 90,
+      paymentsCount: 1,
+      lastActivity: m.startDate || 'Recent'
+    }));
+
+    const trainers = (rawTrainers || []).map((t: any) => {
+      const matchUser = users.find((u: any) => u.name === t.name || u.email?.startsWith(t.phone));
       return {
-        id: m.id,
-        name: m.name || 'Member',
-        phone: m.phone || '',
-        gender: m.gender || 'Male',
-        plan: m.plan || 'Quarterly',
-        startDate: m.startDate || new Date().toISOString().split('T')[0],
-        expires: m.expires || new Date().toISOString().split('T')[0],
-        status: m.status || 'Active',
-        dues: Number(m.dues || 0),
-        dueAmount: Number(m.dues || 0),
-        code: code,
-        daysLeft: 90,
-        paymentsCount: 1,
-        lastActivity: m.startDate || 'Recent'
+        id: t.id,
+        name: t.name || 'Trainer',
+        email: matchUser?.email || (t as any).email || `${t.phone}@gym.com`,
+        phone: t.phone || '',
+        password: matchUser?.password || (t as any).password || 'password123',
+        specialty: t.specialty || 'Strength & HIIT',
+        active: t.active !== false
       };
     });
-
-    const trainers = (rawTrainers || []).map((t: any) => ({
-      id: t.id,
-      name: t.name || 'Trainer',
-      email: (t as any).email || `${t.phone}@gym.com`,
-      phone: t.phone || '',
-      password: (t as any).password || 'password123',
-      specialty: t.specialty || 'Strength & Conditioning',
-      active: t.active !== false
-    }));
 
     const payments = (rawPayments || []).map((p: any) => ({
       id: p.id,
@@ -101,7 +121,7 @@ export async function GET() {
       trainers,
       payments,
       expenses,
-      ptAssignments: [],
+      ptAssignments: Array.isArray(rawPT) ? rawPT : [],
       attendance: Array.isArray(rawAttendance) ? rawAttendance : [],
       plans: [
         { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
@@ -110,7 +130,9 @@ export async function GET() {
         { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
       ]
     }, {
-      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
+      }
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

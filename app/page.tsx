@@ -222,7 +222,7 @@ export default function RepFlowApp() {
         setShowAddTrainerModal(false);
         setShowEditTrainerModal(null);
         setShowAddPlanModal(false);
-        setShowAddPTModal(false);
+        setShowAddPTModal(false); fetchData(); alert("PT Assigned successfully!");
         setShowEditPTModal(null);
         setShowAddExpenseModal(false);
         setSelectedMemberProfile(null);
@@ -572,7 +572,7 @@ export default function RepFlowApp() {
       const created = result.member;
 
       if (newMemberForm.assignPT && newMemberForm.ptTrainer) {
-        await fetch('/api/pt-assign', {
+        const ptRes = await fetch('/api/pt-assign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -813,7 +813,7 @@ export default function RepFlowApp() {
     };
 
     try {
-      await fetch(`/api/trainers/${showEditTrainerModal.id}`, {
+      await fetch("/api/trainers", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, id: showEditTrainerModal.id }) }); const _unused = fetch(`/api/trainers/${showEditTrainerModal.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -852,7 +852,7 @@ export default function RepFlowApp() {
     };
 
     try {
-      await fetch('/api/pt-assign', {
+      const ptRes = await fetch('/api/pt-assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -877,7 +877,7 @@ export default function RepFlowApp() {
         if (payData?.payment?.receipt) stampedReceipt = payData.payment.receipt;
       }
 
-      setShowAddPTModal(false);
+      setShowAddPTModal(false); fetchData(); alert("PT Assigned successfully!");
       fetchData();
 
       setAssignedPTSuccessCard({
