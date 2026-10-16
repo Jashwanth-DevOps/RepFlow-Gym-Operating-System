@@ -23,10 +23,10 @@ export default function RepFlowApp() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // 3-minute inactivity auto-lock session timer
+
   useEffect(() => {
     let idleTimer: NodeJS.Timeout;
-    const IDLE_LIMIT = 3 * 60 * 1000; // 3 minutes
+    const IDLE_LIMIT = 3 * 60 * 1000;
 
     const resetTimer = () => {
       clearTimeout(idleTimer);
@@ -44,43 +44,36 @@ export default function RepFlowApp() {
       events.forEach((evt) => window.removeEventListener(evt, resetTimer));
     };
   }, []);
+
   const [activeUser, setActiveUser] = useState<any>({ name: 'Gym Owner', role: 'Owner', email: 'owner@gym.com' });
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Password Reset
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [showResetPasswordEye, setShowResetPasswordEye] = useState(false);
   const [resetSuccess, setResetSuccess] = useState('');
 
-  // Navigation & Data
   const [currentTab, setCurrentTab] = useState('commandCenter');
   const [dbData, setDbData] = useState<any>(null);
 
-  // Top "+ New" Dropdown
   const [showNewDropdown, setShowNewDropdown] = useState(false);
 
-  // Search & Filters
   const [memberFilter, setMemberFilter] = useState('All');
   const [memberSearch, setMemberSearch] = useState('');
   const [trainerSearch, setTrainerSearch] = useState('');
 
-  // Graph Hover Interactive States
   const [hoveredCommandBar, setHoveredCommandBar] = useState<any>(null);
   const [hoveredReportBar, setHoveredReportBar] = useState<any>(null);
   const [hoveredDonutSegment, setHoveredDonutSegment] = useState<string | null>(null);
 
-  // Natural Language Search
   const [aiQuery, setAiQuery] = useState('');
   const [aiQueryResult, setAiQueryResult] = useState<any>(null);
 
-  // Expenses Date Filter
   const [expenseStartDate, setExpenseStartDate] = useState('');
   const [expenseEndDate, setExpenseEndDate] = useState('');
 
-  // Modals
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showNewMemberModal, setShowNewMemberModal] = useState(false);
   const [showEditMemberModal, setShowEditMemberModal] = useState<any>(null);
@@ -98,63 +91,28 @@ export default function RepFlowApp() {
   const [createdMemberCard, setCreatedMemberCard] = useState<any>(null);
   const [assignedPTSuccessCard, setAssignedPTSuccessCard] = useState<any>(null);
 
-  // Subtabs
   const [staffSubTab, setStaffSubTab] = useState<'Team' | 'Permissions' | 'Audit'>('Team');
   const [settingsSubTab, setSettingsSubTab] = useState<'plans' | 'billing' | 'profile'>('plans');
 
-  // Messages Broadcast & Cohort Selection
   const [broadcastTarget, setBroadcastTarget] = useState('All Members');
   const [broadcastMessage, setBroadcastMessage] = useState('Hi {name}, your membership at Iron Temple Fitness is expiring soon. Renew today to maintain your workout streak!');
 
-  // Retention
   const [retentionScript, setRetentionScript] = useState('Hi {name}, we noticed you haven\'t visited in a while! Your coach has customized workouts ready for you.');
   const [retentionDoneCount, setRetentionDoneCount] = useState(0);
 
-  // Form helpers
   const [showAddTrainerPassword, setShowAddTrainerPassword] = useState(false);
   const [ptMemberSearch, setPtMemberSearch] = useState('');
   const [editPtMemberSearch, setEditPtMemberSearch] = useState('');
   const [payMemberSearch, setPayMemberSearch] = useState('');
 
-  // Front Desk Check-in Records
-    const [checkInInput, setCheckInInput] = useState('');
+  const [checkInInput, setCheckInInput] = useState('');
   const [selectedHistoryDate, setSelectedHistoryDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [filterCheckInDate, setFilterCheckInDate] = useState(() => new Date().toISOString().split('T')[0]);
-
-  useEffect(() => {
-    const fetchNeonRecords = async () => {
-      try {
-        const res = await fetch('/api/data?t=' + Date.now(), {
-          cache: 'no-store',
-          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json && json.members) {
-            setDbData((prev: any) => ({
-              ...prev,
-              ...json,
-              members: Array.isArray(json.members) ? json.members : (prev?.members || []),
-              leads: Array.isArray(json.leads) ? json.leads : (prev?.leads || []),
-              trainers: Array.isArray(json.trainers) ? json.trainers : (prev?.trainers || []),
-              payments: Array.isArray(json.payments) ? json.payments : (prev?.payments || [])
-            }));
-          }
-        }
-      } catch (e) {
-        console.error('Data sync error:', e);
-      }
-    };
-    fetchNeonRecords();
-  }, []);
   const [recentCheckIns, setRecentCheckIns] = useState<any[]>([]);
   const [checkInNotice, setCheckInNotice] = useState<any>(null);
 
-  // Forms
   const [payForm, setPayForm] = useState({ member: '', phone: '', amount: '', method: 'UPI', category: 'Membership', note: '' });
   const [activeLeadDropdown, setActiveLeadDropdown] = useState<string | null>(null);
 
-  // Date format helper: DD-MM-YYYY
   const formatDDMMYYYY = (dateVal: any) => {
     if (!dateVal) return '--';
     const str = String(dateVal).split('T')[0];
@@ -165,7 +123,6 @@ export default function RepFlowApp() {
     return str;
   };
 
-  // Safe Member Form Reset Helper
   const getInitialMemberForm = () => {
     const dEnd = new Date();
     dEnd.setDate(dEnd.getDate() + 90);
@@ -210,7 +167,6 @@ export default function RepFlowApp() {
     endDate: '2027-01-01'
   });
 
-  // Global Esc key dismiss handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -240,9 +196,12 @@ export default function RepFlowApp() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`/api/data?t=${Date.now()}`);
+      const res = await fetch(`/api/data?t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       setDbData(data);
+      if (Array.isArray(data?.attendance)) {
+        setRecentCheckIns(data.attendance);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -290,9 +249,9 @@ export default function RepFlowApp() {
   };
 
   const canPerform = (action: string) => {
-    if (activeUser.role === 'Owner') return true;
+    if (activeUser?.role === 'Owner') return true;
     if (!dbData?.permissions || !dbData.permissions[action]) return false;
-    return !!dbData.permissions[action][activeUser.role];
+    return !!dbData.permissions[action][activeUser?.role];
   };
 
   const calcEndDate = (start: string, planName: string) => {
@@ -313,10 +272,9 @@ export default function RepFlowApp() {
         return window.location.origin;
       }
     }
-    return 'https://repflow-gym.ngrok-free.dev';
+    return 'https://rep-flow-gym-operating-system-4o78.vercel.app';
   };
 
-  // Dynamic Metrics
   const totalCollectedToday = (dbData?.payments || [])
     .filter((p: any) => p.date === todayStr)
     .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
@@ -353,12 +311,11 @@ export default function RepFlowApp() {
     return Math.max(0, diff);
   };
 
-  const isTrainer = activeUser.role === 'Trainer';
+  const isTrainer = activeUser?.role === 'Trainer';
   const trainerAssignedMembers = (dbData?.ptAssignments || [])
-    .filter((pt: any) => pt.trainer?.toLowerCase() === activeUser?.name?.toLowerCase())
-    .map((pt: any) => pt.member?.toLowerCase());
+    .filter((pt: any) => (pt.trainer || "").toLowerCase() === (activeUser?.name || "").toLowerCase())
+    .map((pt: any) => (pt.member || "").toLowerCase());
 
-  // Real-Time 30-Day Timeline Data Generator
   const generateRealLast30DaysData = () => {
     const daysArr: any[] = [];
     const paymentsList = dbData?.payments || [];
@@ -373,7 +330,7 @@ export default function RepFlowApp() {
       const daysPayments = paymentsList.filter((p: any) => p.date === isoDate);
       const digitalSum = daysPayments.filter((p: any) => p.method !== 'Cash').reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
       const cashSum = daysPayments.filter((p: any) => p.method === 'Cash').reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
-      const dayCheckins = isoDate === todayStr ? recentCheckIns.length : (daysPayments.length > 0 ? daysPayments.length * 2 : 0);
+      const dayCheckins = (dbData?.attendance || recentCheckIns || []).filter((a: any) => String(a.date || "").split('T')[0] === isoDate).length;
 
       const dayTotal = digitalSum + cashSum;
       if (dayTotal > maxVal) maxVal = dayTotal;
@@ -397,7 +354,6 @@ export default function RepFlowApp() {
 
   const real30DaysTimeline = generateRealLast30DaysData();
 
-  // Natural Language Search Processor
   const processAiQuery = (query: string) => {
     const q = query.toLowerCase();
     if (q.includes('owe') || q.includes('due') || q.includes('money')) {
@@ -421,7 +377,7 @@ export default function RepFlowApp() {
       const res = await fetch(`/api/pt-assign/${ptId}/complete-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ operator: activeUser.name })
+        body: JSON.stringify({ operator: activeUser?.name || 'Owner' })
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -430,6 +386,7 @@ export default function RepFlowApp() {
           ptAssignments: (prev?.ptAssignments || []).map((pt: any) => pt.id === ptId ? { ...pt, sessions: data.pt.sessions } : pt)
         }));
         alert(`Class completed! ${data.pt.sessions} session(s) remaining for ${data.pt.member}.`);
+        fetchData();
       } else {
         alert(data.message || 'Could not complete session.');
       }
@@ -438,7 +395,6 @@ export default function RepFlowApp() {
     }
   };
 
-  // Auth Handlers
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
@@ -464,7 +420,7 @@ export default function RepFlowApp() {
 
   const handleResetPassword = async (e: any) => {
     e.preventDefault();
-    const res = await fetch('/api/auth/reset-password', {
+    const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: e.target.resetEmail.value, newPassword: e.target.newPass.value })
@@ -484,26 +440,25 @@ export default function RepFlowApp() {
     localStorage.removeItem('repflow_active_tab');
   };
 
-  // Front Desk Check-in Handler
   const handleFrontDeskCheckIn = async (inputVal: string) => {
     setCheckInNotice(null);
-    const cleaned = inputVal.trim();
+    const cleaned = (inputVal || '').trim().toUpperCase();
     if (!cleaned) return;
 
-    const isMemberCode = /^IT\d+/i.test(cleaned);
-    if (!isMemberCode) {
+    if (!cleaned.startsWith('IT')) {
       setCheckInNotice({ type: 'warning', message: 'Enter exact Member ID (e.g. IT1001).' });
       return;
     }
 
-    const match = (dbData?.members || []).find((m: any) => (((m?.code || m?.id || "").toLowerCase())) === cleaned.toLowerCase());
+    const match = (dbData?.members || []).find((m: any) => (m?.code || '').toUpperCase() === cleaned || (m?.id || '').toUpperCase() === cleaned);
 
     if (!match) {
       setCheckInNotice({ type: 'error', message: `No active member found with ID "${cleaned}".` });
       return;
     }
 
-    const alreadyCheckedIn = recentCheckIns.find((c: any) => c.id === match.id);
+    const currentAttendance = dbData?.attendance || recentCheckIns || [];
+    const alreadyCheckedIn = currentAttendance.find((c: any) => (c.memberId === match.id || c.memberCode === match.code) && String(c.date || "").split('T')[0] === todayStr);
     if (alreadyCheckedIn) {
       setCheckInNotice({ type: 'warning', message: `${match.name} was ALREADY checked in today at ${alreadyCheckedIn.time}.` });
       setCheckInInput('');
@@ -511,12 +466,29 @@ export default function RepFlowApp() {
     }
 
     const nowTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-    setRecentCheckIns([{ name: match.name, id: match.id, memberCode: match.code, phone: match.phone, plan: match.plan, time: nowTime, date: todayStr }, ...recentCheckIns]);
-    setCheckInNotice({ type: 'success', message: `${match.name} checked in successfully at ${nowTime}!` });
-    setCheckInInput('');
+
+    try {
+      await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: match.id,
+          memberCode: match.code,
+          memberName: match.name,
+          phone: match.phone,
+          plan: match.plan,
+          date: todayStr,
+          time: nowTime
+        })
+      });
+      await fetchData();
+      setCheckInNotice({ type: 'success', message: `${match.name} (${match.code}) checked in successfully at ${nowTime}!` });
+      setCheckInInput('');
+    } catch (e: any) {
+      setCheckInNotice({ type: 'warning', message: 'Attendance sync error: ' + e.message });
+    }
   };
 
-  // Registration Calculations (Clean Rupee, zero dollar signs)
   const defaultTaxRate = dbData?.billingSettings?.taxPercent || 18;
   const basePlanPrice = Number(newMemberForm.planPrice || 0);
   const admissionPrice = newMemberForm.includeAdmissionFee ? Number(newMemberForm.admissionFee || 500) : 0;
@@ -555,7 +527,7 @@ export default function RepFlowApp() {
       expires: newMemberForm.endDate,
       status: 'Active',
       dues: Number(newMemberForm.dues || 0),
-      operator: activeUser.name
+      operator: activeUser?.name || 'Owner'
     };
 
     try {
@@ -572,7 +544,7 @@ export default function RepFlowApp() {
       const created = result.member;
 
       if (newMemberForm.assignPT && newMemberForm.ptTrainer) {
-        const ptRes = await fetch('/api/pt-assign', {
+        await fetch('/api/pt-assign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -583,7 +555,7 @@ export default function RepFlowApp() {
             method: newMemberForm.paymentMethod,
             startDate: newMemberForm.startDate,
             endDate: newMemberForm.endDate,
-            operator: activeUser.name
+            operator: activeUser?.name || 'Owner'
           })
         });
       }
@@ -599,15 +571,10 @@ export default function RepFlowApp() {
             method: newMemberForm.paymentMethod,
             plan: `${created.plan}${admissionPrice > 0 ? ' + Adm' : ''}${ptPriceCalc > 0 ? ' + PT' : ''}`,
             date: todayStr,
-            operator: activeUser.name
+            operator: activeUser?.name || 'Owner'
           })
         });
       }
-
-      setDbData((prev: any) => ({
-        ...prev,
-        members: [created, ...(prev?.members || [])]
-      }));
 
       setCreatedMemberCard({
         ...created,
@@ -654,15 +621,10 @@ export default function RepFlowApp() {
       dues: Number(showEditMemberModal.dues || 0),
       startDate: showEditMemberModal.startDate,
       expires: showEditMemberModal.expires,
-      operator: activeUser.name
+      operator: activeUser?.name || 'Owner'
     };
 
     const targetId = showEditMemberModal.id;
-
-    setDbData((prev: any) => ({
-      ...prev,
-      members: (prev?.members || []).map((m: any) => m.id === targetId ? { ...m, ...updatedPayload } : m)
-    }));
 
     if (selectedMemberProfile && selectedMemberProfile.id === targetId) {
       setSelectedMemberProfile({ ...selectedMemberProfile, ...updatedPayload });
@@ -692,7 +654,7 @@ export default function RepFlowApp() {
         method: renewForm.method,
         startDate: renewForm.startDate,
         endDate: renewForm.endDate,
-        operator: activeUser.name
+        operator: activeUser?.name || 'Owner'
       };
 
       const res = await fetch(`/api/members/${showRenewModal.id}/renew`, {
@@ -728,20 +690,15 @@ export default function RepFlowApp() {
       plan: e.target.leadPlan.value,
       note: e.target.leadNote.value,
       stage: 'New',
-      operator: activeUser.name
+      operator: activeUser?.name || 'Owner'
     };
 
     try {
-      const res = await fetch('/api/leads', {
+      await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const d = await res.json();
-      setDbData((prev: any) => ({
-        ...prev,
-        leads: [d.lead, ...(prev?.leads || [])]
-      }));
       setShowNewLeadModal(false);
       fetchData();
     } catch (err) {
@@ -757,8 +714,9 @@ export default function RepFlowApp() {
     await fetch(`/api/leads/${leadId}/stage`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage: newStage, operator: activeUser.name })
+      body: JSON.stringify({ stage: newStage, operator: activeUser?.name || 'Owner' })
     });
+    fetchData();
   };
 
   const handleCreateTrainer = async (e: any) => {
@@ -778,16 +736,11 @@ export default function RepFlowApp() {
     };
 
     try {
-      const res = await fetch('/api/trainers', {
+      await fetch('/api/trainers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const d = await res.json();
-      setDbData((prev: any) => ({
-        ...prev,
-        trainers: [...(prev?.trainers || []), d.trainer]
-      }));
       setShowAddTrainerModal(false);
       fetchData();
       alert(`Trainer ${payload.name} created! Password: ${payload.password}`);
@@ -805,6 +758,7 @@ export default function RepFlowApp() {
     }
 
     const payload = {
+      id: showEditTrainerModal.id,
       name: e.target.trName.value,
       email: e.target.trEmail.value,
       password: e.target.trPassword.value,
@@ -813,7 +767,7 @@ export default function RepFlowApp() {
     };
 
     try {
-      await fetch("/api/trainers", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...payload, id: showEditTrainerModal.id }) }); const _unused = fetch(`/api/trainers/${showEditTrainerModal.id}`, {
+      await fetch('/api/trainers', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -848,11 +802,11 @@ export default function RepFlowApp() {
       method: payMethod,
       startDate,
       endDate,
-      operator: activeUser.name
+      operator: activeUser?.name || 'Owner'
     };
 
     try {
-      const ptRes = await fetch('/api/pt-assign', {
+      await fetch('/api/pt-assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -865,12 +819,12 @@ export default function RepFlowApp() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             member: memberName,
-            phone: '9876543210',
+            phone: '',
             amount: ptPrice,
             method: payMethod,
             plan: `PT Package (${sessions} sessions)`,
             date: todayStr,
-            operator: activeUser.name
+            operator: activeUser?.name || 'Owner'
           })
         });
         const payData = await payRes.json();
@@ -904,7 +858,7 @@ export default function RepFlowApp() {
       price: Number(e.target.ptPrice.value),
       startDate: e.target.ptStart.value,
       endDate: e.target.ptEnd.value,
-      operator: activeUser.name
+      operator: activeUser?.name || 'Owner'
     };
 
     try {
@@ -935,7 +889,7 @@ export default function RepFlowApp() {
       plan: payForm.category,
       note: payForm.note,
       date: todayStr,
-      operator: activeUser.name
+      operator: activeUser?.name || 'Owner'
     };
 
     try {
@@ -980,7 +934,6 @@ export default function RepFlowApp() {
     }
   };
 
-  // Background PDF Invoice Generator
   const downloadOfficialTemplatePDF = (data: any) => {
     const invoiceUrl = `/api/invoices/${data.id || 'IT1001'}`;
     const iframe = document.createElement('iframe');
@@ -992,7 +945,6 @@ export default function RepFlowApp() {
     }, 10000);
   };
 
-  // Structured Tabular PDF Exports
   const downloadTabularExportPDF = (type: string) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -1073,7 +1025,7 @@ export default function RepFlowApp() {
         <div class="header">
           <div>
             <div class="title">${gymName} — ${title} REPORT</div>
-            <div style="font-size:11px; color:#555;">Generated on ${formatDDMMYYYY(todayStr)} by ${activeUser.name} (${activeUser.role})</div>
+            <div style="font-size:11px; color:#555;">Generated on ${formatDDMMYYYY(todayStr)} by ${activeUser?.name || 'Owner'} (${activeUser?.role || 'Owner'})</div>
           </div>
           <div style="font-size:12px; font-weight:bold;">Total Records: ${list.length}</div>
         </div>
@@ -1089,7 +1041,6 @@ export default function RepFlowApp() {
     printWindow.document.close();
   };
 
-  // Consolidated All-In-One Master PDF Export
   const downloadAllInOneMasterPDF = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -1172,7 +1123,7 @@ export default function RepFlowApp() {
             <div>Branch: ${branch} | GSTIN: ${gstin} | Generated on: <strong>${formatDDMMYYYY(todayStr)}</strong></div>
           </div>
           <div style="text-align: right;">
-            <div>Authorized Operator: <strong>${activeUser.name}</strong></div>
+            <div>Authorized Operator: <strong>${activeUser?.name || 'Owner'}</strong></div>
             <div>System: RepFlow Gym OS Enterprise</div>
           </div>
         </div>
@@ -1217,7 +1168,6 @@ export default function RepFlowApp() {
     printWindow.document.close();
   };
 
-  // Filtered Expenses Calculation & PDF
   const filteredExpensesList = (dbData?.expenses || []).filter((exp: any) => {
     if (!expenseStartDate && !expenseEndDate) return true;
     const expDate = exp.date || '';
@@ -1294,7 +1244,6 @@ export default function RepFlowApp() {
   const textColor = theme === 'dark' ? 'text-white' : 'text-slate-900';
   const subTextColor = theme === 'dark' ? 'text-neutral-400' : 'text-slate-500';
 
-  // ------------------------- LOGIN VIEW ------------------------- //
   if (!isAuthenticated) {
     return (
       <div className={`min-h-screen flex items-center justify-center p-4 ${theme === 'dark' ? 'bg-[#0f1115] text-white' : 'bg-slate-100 text-slate-900'}`}>
@@ -1391,7 +1340,6 @@ export default function RepFlowApp() {
     );
   }
 
-  // ------------------------- MAIN DASHBOARD VIEW ------------------------- //
   return (
     <div className={`min-h-screen flex flex-col md:flex-row ${theme === 'dark' ? 'bg-[#0f1115] text-[#e5e7eb]' : 'bg-slate-50 text-slate-900'}`}>
       
@@ -1404,7 +1352,7 @@ export default function RepFlowApp() {
         </div>
 
         <div className="flex items-center gap-1.5 relative">
-          {activeUser.role !== 'Trainer' && (
+          {activeUser?.role !== 'Trainer' && (
             <div className="relative">
               <button onClick={(e) => { e.stopPropagation(); setShowNewDropdown(!showNewDropdown); setUserMenuOpen(false); }} className="flex items-center gap-1 text-[11px] bg-[#84cc16] text-black font-bold px-2.5 py-1.5 rounded-lg hover:bg-[#72b012]">
                 <Plus className="w-3.5 h-3.5" /> New <ChevronDown className="w-3.5 h-3.5" />
@@ -1435,7 +1383,7 @@ export default function RepFlowApp() {
             </button>
             {userMenuOpen && (
               <div className={`absolute right-0 top-9 w-36 rounded-xl border p-1 shadow-2xl z-50 text-xs font-semibold ${cardBg}`}>
-                {activeUser.role === 'Owner' && (
+                {activeUser?.role === 'Owner' && (
                   <button onClick={() => { navigateTab('settings'); setUserMenuOpen(false); }} className={`w-full text-left p-2 rounded hover:bg-[#84cc16]/10 flex items-center gap-2 ${textColor}`}>
                     <Settings className="w-3.5 h-3.5" /> Settings
                   </button>
@@ -1484,7 +1432,7 @@ export default function RepFlowApp() {
               <div className="flex items-center gap-3"><Users className="w-4 h-4" /> Members</div>
               <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${innerBg}`}>{isTrainer ? trainerAssignedMembers.length : (dbData?.members?.length || 0)}</span>
             </button>
-            {activeUser.role !== 'Trainer' && (
+            {activeUser?.role !== 'Trainer' && (
               <button onClick={() => navigateTab('leads')} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg ${currentTab === 'leads' ? 'bg-[#84cc16] text-black font-bold' : `${subTextColor} hover:${textColor}`}`}>
                 <div className="flex items-center gap-3"><UserPlus className="w-4 h-4" /> Leads</div>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${innerBg}`}>{dbData?.leads?.length || 0}</span>
@@ -1494,7 +1442,7 @@ export default function RepFlowApp() {
               <Dumbbell className="w-4 h-4" /> Trainers & PT
             </button>
 
-            {activeUser.role !== 'Trainer' && (
+            {activeUser?.role !== 'Trainer' && (
               <>
                 <div className="text-[10px] font-bold text-neutral-500 uppercase px-2 pt-2 py-1">MONEY</div>
                 {canPerform('Collect payments') && (
@@ -1528,7 +1476,7 @@ export default function RepFlowApp() {
               </>
             )}
 
-            {activeUser.role === 'Owner' && (
+            {activeUser?.role === 'Owner' && (
               <>
                 <div className="text-[10px] font-bold text-neutral-500 uppercase px-2 pt-2 py-1">ADMIN & SETTINGS</div>
                 <button onClick={() => navigateTab('reports')} className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg ${currentTab === 'reports' ? 'bg-[#84cc16] text-black font-bold' : `${subTextColor} hover:${textColor}`}`}>
@@ -1546,8 +1494,8 @@ export default function RepFlowApp() {
 
           <div className={`p-3 rounded-xl border flex items-center justify-between mt-4 ${cardBg}`}>
             <div>
-              <div className={`text-xs font-semibold ${textColor}`}>{activeUser.name}</div>
-              <div className="text-[10px] text-[#84cc16] font-mono font-bold">{activeUser.role}</div>
+              <div className={`text-xs font-semibold ${textColor}`}>{activeUser?.name || 'User'}</div>
+              <div className="text-[10px] text-[#84cc16] font-mono font-bold">{activeUser?.role || 'Staff'}</div>
             </div>
             <button onClick={handleLogout} className="text-[11px] text-neutral-400 hover:text-rose-500 font-semibold underline">Sign out</button>
           </div>
@@ -1562,7 +1510,7 @@ export default function RepFlowApp() {
           <div className="text-xs font-semibold text-neutral-400">RepFlow OS • Real-Time Engine</div>
 
           <div className="flex items-center gap-3 relative">
-            {activeUser.role !== 'Trainer' && (
+            {activeUser?.role !== 'Trainer' && (
               <div className="relative">
                 <button onClick={(e) => { e.stopPropagation(); setShowNewDropdown(!showNewDropdown); setUserMenuOpen(false); }} className="flex items-center gap-1.5 text-xs bg-[#84cc16] text-black font-bold px-3 py-1.5 rounded-lg hover:bg-[#72b012]">
                   <Plus className="w-3.5 h-3.5" /> New <ChevronDown className="w-3.5 h-3.5" />
@@ -1593,7 +1541,7 @@ export default function RepFlowApp() {
               </button>
               {userMenuOpen && (
                 <div className={`absolute right-0 top-10 w-36 rounded-xl border p-1 shadow-2xl z-50 text-xs font-semibold ${cardBg}`}>
-                  {activeUser.role === 'Owner' && (
+                  {activeUser?.role === 'Owner' && (
                     <button onClick={() => { navigateTab('settings'); setUserMenuOpen(false); }} className={`w-full text-left p-2 rounded hover:bg-[#84cc16]/10 flex items-center gap-2 ${textColor}`}>
                       <Settings className="w-3.5 h-3.5" /> Settings
                     </button>
@@ -1617,7 +1565,7 @@ export default function RepFlowApp() {
                 <div>
                   <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-neutral-400">TODAY, {formatDDMMYYYY(todayStr)}</p>
                   <h2 className={`text-xl sm:text-2xl font-bold mt-0.5 ${textColor}`}>
-                    Good afternoon, {activeUser.name}. Here's your gym today.
+                    Good afternoon, {activeUser?.name}. Here's your gym today.
                   </h2>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1638,7 +1586,7 @@ export default function RepFlowApp() {
                 <div onClick={() => navigateTab('payments')} className={`p-3.5 rounded-xl border cursor-pointer hover:border-[#84cc16] ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">COLLECTED TODAY</p>
                   <p className="text-xl sm:text-2xl font-black text-[#84cc16] mt-1">₹{totalCollectedToday}</p>
-                  <p className={`text-[9px] mt-0.5 ${subTextColor}`}>{recentCheckIns.length} check-ins</p>
+                  <p className={`text-[9px] mt-0.5 ${subTextColor}`}>{(dbData?.attendance || recentCheckIns || []).filter((a: any) => String(a.date || "").split('T')[0] === todayStr).length} check-ins</p>
                 </div>
                 <div onClick={() => navigateTab('expenses')} className={`p-3.5 rounded-xl border cursor-pointer hover:border-green-400 ${cardBg}`}>
                   <p className="text-[9px] uppercase font-bold text-neutral-400">THIS MONTH</p>
@@ -1785,7 +1733,7 @@ export default function RepFlowApp() {
                   <div className="flex items-baseline gap-2 pt-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#84cc16]" />
                     <span className="text-[10px] uppercase font-bold text-neutral-400">INSIDE NOW</span>
-                    <span className={`text-2xl font-black ml-auto ${textColor}`}>{recentCheckIns.length}</span>
+                    <span className={`text-2xl font-black ml-auto ${textColor}`}>{(dbData?.attendance || recentCheckIns || []).filter((a: any) => String(a.date || "").split('T')[0] === todayStr).length}</span>
                   </div>
                   <div className="grid grid-cols-7 gap-1 pt-3">
                     {[1, 2, 3, 4, 5, 6, 7].map(col => (
@@ -1861,7 +1809,7 @@ export default function RepFlowApp() {
                   <div className="space-y-1">
                     <p>• Collected today: <strong>₹{totalCollectedToday}</strong></p>
                     <p>• Dues outstanding: <strong className="text-rose-400">₹{totalDuesPending}</strong> across {(dbData?.members || []).filter((m: any) => m.dues > 0).length} members</p>
-                    <p>• Check-ins recorded today: <strong>{recentCheckIns.length}</strong></p>
+                    <p>• Check-ins recorded today: <strong>{(dbData?.attendance || recentCheckIns || []).filter((a: any) => String(a.date || "").split('T')[0] === todayStr).length}</strong></p>
                   </div>
                   <div className="space-y-1">
                     <p>• Month to date: <strong className="text-[#84cc16]">₹{totalMonthRevenue}</strong></p>
@@ -1937,7 +1885,7 @@ export default function RepFlowApp() {
                   </thead>
                   <tbody className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
                     {(dbData?.members || []).filter((m: any) => {
-                      if (isTrainer) return trainerAssignedMembers.includes(m.name?.toLowerCase());
+                      if (isTrainer) return trainerAssignedMembers.includes((m.name || '').toLowerCase());
                       if (memberFilter === 'Active') return m.status === 'Active';
                       if (memberFilter === 'EndingIn3Days') return getDaysLeft(m.expires) <= 3 && m.status !== 'Expired';
                       if (memberFilter === 'Expiring') return getDaysLeft(m.expires) <= 7 && m.status !== 'Expired';
@@ -1959,7 +1907,7 @@ export default function RepFlowApp() {
                             <>
                               <td className="p-2.5 sm:p-3 font-mono text-[#84cc16] font-bold">{ptRecord?.sessions || 12} sessions</td>
                               <td className={`p-2.5 sm:p-3 font-bold ${textColor}`}>₹{ptRecord?.price || 6000}</td>
-                              <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{formatDDMMYYYY(ptRecord.startDate)} to {formatDDMMYYYY(ptRecord.endDate)}</td>
+                              <td className={`p-2.5 sm:p-3 ${subTextColor}`}>{formatDDMMYYYY(ptRecord?.startDate)} to {formatDDMMYYYY(ptRecord?.endDate)}</td>
                             </>
                           ) : (
                             <>
@@ -2044,10 +1992,10 @@ export default function RepFlowApp() {
                 <div>
                   <h2 className={`text-base sm:text-xl font-bold ${textColor}`}>Trainers & PT</h2>
                   <p className={`text-[10px] sm:text-xs ${subTextColor}`}>
-                    {isTrainer ? `Welcome, ${activeUser.name}. Manage your assigned clients and sessions.` : 'Manage trainers, assign PT packages to members, and track commissions.'}
+                    {isTrainer ? `Welcome, ${activeUser?.name}. Manage your assigned clients and sessions.` : 'Manage trainers, assign PT packages to members, and track commissions.'}
                   </p>
                 </div>
-                {activeUser.role === 'Owner' && (
+                {activeUser?.role === 'Owner' && (
                   <div className="flex gap-2">
                     <button onClick={(e) => { e.stopPropagation(); setShowAddTrainerModal(true); }} className="px-3 py-1.5 bg-neutral-800 text-white rounded text-xs">+ Add Trainer</button>
                     <button onClick={(e) => { e.stopPropagation(); setPtMemberSearch(''); setShowAddPTModal(true); }} className="px-3.5 py-1.5 bg-[#84cc16] text-black font-bold rounded text-xs">+ Assign PT</button>
@@ -2058,30 +2006,39 @@ export default function RepFlowApp() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {(dbData?.trainers || [])
                   .filter((tr: any) => isTrainer ? tr.name?.toLowerCase() === activeUser?.name?.toLowerCase() : true)
-                  .filter((tr: any) => tr.name.toLowerCase().includes(trainerSearch.toLowerCase())).map((trainer: any) => (
-                    <div key={trainer.id} className={`p-4 rounded-xl border space-y-2.5 ${cardBg}`}>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h4 className={`font-bold text-sm ${textColor}`}>{trainer.name}</h4>
-                            {activeUser.role === 'Owner' && (
-                              <button onClick={(e) => { e.stopPropagation(); setShowEditTrainerModal(trainer); }} className="p-1 text-neutral-400 hover:text-[#84cc16]">
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                  .filter((tr: any) => tr.name.toLowerCase().includes(trainerSearch.toLowerCase())).map((trainer: any) => {
+                    const cleanTrName = (trainer.name || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+                    const trainerAssignments = (dbData?.ptAssignments || []).filter((p: any) => (p.trainer || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === cleanTrName);
+                    const totalClients = trainerAssignments.length;
+                    const totalSessions = trainerAssignments.reduce((acc: number, curr: any) => acc + (curr.sessions || 0), 0);
+                    const totalPTSold = trainerAssignments.reduce((acc: number, curr: any) => acc + (curr.price || 0), 0);
+                    const commission = Math.round(totalPTSold * 0.2);
+
+                    return (
+                      <div key={trainer.id} className={`p-4 rounded-xl border space-y-2.5 ${cardBg}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className={`font-bold text-sm ${textColor}`}>{trainer.name}</h4>
+                              {activeUser?.role === 'Owner' && (
+                                <button onClick={(e) => { e.stopPropagation(); setShowEditTrainerModal(trainer); }} className="p-1 text-neutral-400 hover:text-[#84cc16]">
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <p className={`text-[10px] ${subTextColor}`}>{trainer.specialty}</p>
                           </div>
-                          <p className={`text-[10px] ${subTextColor}`}>{trainer.specialty}</p>
+                          <span className="text-xs font-bold text-amber-500 bg-amber-400/10 px-2 py-0.5 rounded">★ {trainer.rating || "5.0"}</span>
                         </div>
-                        <span className="text-xs font-bold text-amber-500 bg-amber-400/10 px-2 py-0.5 rounded">★ {trainer.rating || "5.0"}</span>
+                        <div className="grid grid-cols-2 gap-2 text-xs py-1 border-y border-neutral-800">
+                          <div>Clients: <strong>{totalClients}</strong></div>
+                          <div>Sessions: <strong>{totalSessions}</strong></div>
+                          <div>PT Sold: <strong>₹{totalPTSold}</strong></div>
+                          <div>Commission: <strong className="text-[#84cc16]">₹{commission}</strong></div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs py-1 border-y border-neutral-800">
-                        <div>Clients: <strong>{trainer.clients || 0}</strong></div>
-                        <div>Sessions: <strong>{trainer.sessions || 0}</strong></div>
-                        <div>PT Sold: <strong>₹{trainer.sold || 0}</strong></div>
-                        <div>Commission: <strong className="text-[#84cc16]">₹{trainer.commission || 0}</strong></div>
-                      </div>
-                    </div>
-                ))}
+                    );
+                  })}
               </div>
 
               <div className={`border rounded-xl overflow-hidden ${cardBg}`}>
@@ -2124,7 +2081,7 @@ export default function RepFlowApp() {
                             )}
                           </td>
                         </tr>
-                    ))}
+                      ))}
                   </tbody>
                 </table>
               </div>
@@ -2517,7 +2474,7 @@ export default function RepFlowApp() {
                 </div>
               </div>
 
-              {/* Row 2: Real Synchronized 6 Months & Donut Chart (Strictly clean Rupee) */}
+              {/* Row 2: Real Synchronized 6 Months & Donut Chart */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                 <div className={`lg:col-span-2 p-5 rounded-2xl border space-y-3 relative ${cardBg}`}>
                   <div className="flex justify-between items-center text-xs">
@@ -2777,40 +2734,40 @@ export default function RepFlowApp() {
                               className="p-2.5 sm:p-3 text-center font-bold"
                             >
                               {(() => {
-                        const isAllowed = !!dbData?.permissions?.[action]?.[role];
-                        return (
-                          <button
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              const nextVal = !isAllowed;
-                              setDbData((prev: any) => ({
-                                ...prev,
-                                permissions: {
-                                  ...prev?.permissions,
-                                  [action]: {
-                                    ...(prev?.permissions?.[action] || {}),
-                                    [role]: nextVal
-                                  }
-                                }
-                              }));
-                              await fetch('/api/permissions', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action, role, value: nextVal })
-                              });
-                            }}
-                            className={`px-2.5 py-1 rounded text-xs font-bold transition border ${
-                              isAllowed
-                                ? 'bg-[#84cc16]/10 text-[#84cc16] border-[#84cc16]/40 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30'
-                                : 'bg-neutral-800/40 text-neutral-500 border-neutral-700 hover:bg-[#84cc16]/10 hover:text-[#84cc16] hover:border-[#84cc16]/30'
-                            }`}
-                            title={`Click to toggle ${action} for ${role}`}
-                          >
-                            {isAllowed ? '✓ Allowed' : '— Denied'}
-                          </button>
-                        );
-                      })()}
+                                const isAllowed = !!dbData?.permissions?.[action]?.[role];
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const nextVal = !isAllowed;
+                                      setDbData((prev: any) => ({
+                                        ...prev,
+                                        permissions: {
+                                          ...prev?.permissions,
+                                          [action]: {
+                                            ...(prev?.permissions?.[action] || {}),
+                                            [role]: nextVal
+                                          }
+                                        }
+                                      }));
+                                      await fetch('/api/permissions', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ action, role, value: nextVal })
+                                      });
+                                    }}
+                                    className={`px-2.5 py-1 rounded text-xs font-bold transition border ${
+                                      isAllowed
+                                        ? 'bg-[#84cc16]/10 text-[#84cc16] border-[#84cc16]/40 hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30'
+                                        : 'bg-neutral-800/40 text-neutral-500 border-neutral-700 hover:bg-[#84cc16]/10 hover:text-[#84cc16] hover:border-[#84cc16]/30'
+                                    }`}
+                                    title={`Click to toggle ${action} for ${role}`}
+                                  >
+                                    {isAllowed ? '✓ Allowed' : '— Denied'}
+                                  </button>
+                                );
+                              })()}
                             </td>
                           ))}
                         </tr>
@@ -2898,7 +2855,7 @@ export default function RepFlowApp() {
                     });
                     alert('Billing & Tax settings updated!');
                     fetchData();
-                  }}
+                  }} 
                   className={`p-4 sm:p-5 rounded-2xl border max-w-lg space-y-3.5 text-xs ${cardBg}`}
                 >
                   <div>
@@ -2946,7 +2903,7 @@ export default function RepFlowApp() {
                     });
                     alert('Profile and Public Invoice URL updated!');
                     fetchData();
-                  }}
+                  }} 
                   className={`p-4 sm:p-5 rounded-2xl border max-w-lg space-y-3.5 text-xs ${cardBg}`}
                 >
                   <div>
@@ -2965,8 +2922,8 @@ export default function RepFlowApp() {
                     <label className="text-neutral-400 font-bold">Public Domain / Ngrok Link (Used for WhatsApp Invoices)</label>
                     <input 
                       name="publicUrl" 
-                      defaultValue={dbData?.gymProfile?.publicUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://repflow-gym.ngrok-free.dev')} 
-                      placeholder="https://your-domain.ngrok-free.dev" 
+                      defaultValue={dbData?.gymProfile?.publicUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://rep-flow-gym-operating-system-4o78.vercel.app')} 
+                      placeholder="https://rep-flow-gym-operating-system-4o78.vercel.app" 
                       className={`w-full mt-1 px-3 py-2 border rounded-lg font-mono text-[#84cc16] font-bold ${innerBg}`} 
                     />
                     <p className={`text-[10px] mt-1 ${subTextColor}`}>Allows customers to download invoice PDFs directly from WhatsApp on their phones.</p>
@@ -3004,31 +2961,38 @@ export default function RepFlowApp() {
 
               <div className={`border rounded-xl overflow-hidden ${cardBg}`}>
                 <div className="p-3 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-neutral-900/60">
-  <div className="flex items-center gap-2">
-    <span className="text-[11px] font-bold tracking-wider uppercase text-neutral-300">CHECK-IN HISTORY</span>
-    <span className="text-[10px] font-mono font-bold bg-[#84cc16]/20 text-[#84cc16] px-2.5 py-0.5 rounded-full">
-      {((dbData?.attendance && dbData.attendance.length > 0 ? dbData.attendance : recentCheckIns) || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).length} Checked In
-    </span>
-  </div>
-  <div className="flex items-center gap-2">
-    <span className="text-[11px] font-bold text-neutral-400">Date:</span>
-    <input
-      type="date"
-      value={selectedHistoryDate}
-      onChange={(e) => setSelectedHistoryDate(e.target.value)}
-      className="px-2.5 py-1 text-xs rounded-lg border border-neutral-700 bg-black text-[#84cc16] focus:outline-none focus:border-[#84cc16]"
-    />
-  </div>
-</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold tracking-wider uppercase text-neutral-300">CHECK-IN HISTORY</span>
+                    <span className="text-[10px] font-mono font-bold bg-[#84cc16]/20 text-[#84cc16] px-2.5 py-0.5 rounded-full">
+                      {((dbData?.attendance && dbData.attendance.length > 0 ? dbData.attendance : recentCheckIns) || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).length} Checked In
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-neutral-400">Date:</span>
+                    <input
+                      type="date"
+                      value={selectedHistoryDate}
+                      onChange={(e) => setSelectedHistoryDate(e.target.value)}
+                      className="px-2.5 py-1 text-xs rounded-lg border border-neutral-700 bg-black text-[#84cc16] focus:outline-none focus:border-[#84cc16]"
+                    />
+                  </div>
+                </div>
                 <div className={`divide-y ${theme === 'dark' ? 'divide-neutral-800' : 'divide-slate-200'}`}>
-                  {((dbData?.attendance && dbData.attendance.length > 0 ? dbData.attendance : recentCheckIns) || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).map((item: any, idx: number) => (
-                    <div key={idx} className="p-2.5 flex justify-between items-center text-xs">
-                      <div><div className={`font-bold ${textColor}`}>{item.name}</div><div className={`text-[10px] ${subTextColor}`}>{item.memberCode || item.code || "IT1001"}</div></div>
-                      <span className="font-mono text-[#84cc16] font-bold">{item.time}</span>
-                    </div>
-                  ))}
-                  {recentCheckIns.length === 0 && (
-                    <p className={`p-6 text-center text-xs ${subTextColor}`}>No members checked in yet today.</p>
+                  {((dbData?.attendance && dbData.attendance.length > 0 ? dbData.attendance : recentCheckIns) || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).map((item: any, idx: number) => {
+                    const matchMember = (dbData?.members || []).find((m: any) => m.name === item.name || m.id === item.memberId);
+                    const displayCode = item.memberCode || item.code || matchMember?.code || "IT1001";
+                    return (
+                      <div key={idx} className="p-2.5 flex justify-between items-center text-xs">
+                        <div>
+                          <div className={`font-bold ${textColor}`}>{item.name || item.memberName}</div>
+                          <div className={`text-[10px] ${subTextColor}`}>{displayCode}</div>
+                        </div>
+                        <span className="font-mono text-[#84cc16] font-bold">{item.time}</span>
+                      </div>
+                    );
+                  })}
+                  {((dbData?.attendance && dbData.attendance.length > 0 ? dbData.attendance : recentCheckIns) || []).filter((item: any) => String(item.date || "").split("T")[0] === String(selectedHistoryDate).split("T")[0]).length === 0 && (
+                    <p className={`p-6 text-center text-xs ${subTextColor}`}>No members checked in for this date.</p>
                   )}
                 </div>
               </div>
@@ -3052,15 +3016,27 @@ export default function RepFlowApp() {
             </div>
             <div className={`grid grid-cols-2 gap-2.5 py-2 border-y ${theme === 'dark' ? 'border-neutral-800' : 'border-slate-200'}`}>
               <div><span className="text-neutral-400">Plan:</span> <strong className={`block mt-0.5 ${textColor}`}>{selectedMemberProfile.plan}</strong></div>
-              <div><div className="flex justify-between py-1 text-xs"><span className="text-neutral-400">Check-ins in last 30 days:</span><span className="text-lime-400 font-bold">{((dbData?.attendance || recentCheckIns || []).filter((a: any) => (a.memberCode && selectedMemberProfile?.code && a.memberCode === selectedMemberProfile.code) || (a.memberName && selectedMemberProfile?.name && (a.memberName || "").toLowerCase() === (selectedMemberProfile.name || "").toLowerCase()) || (a.memberId && selectedMemberProfile?.id && a.memberId === selectedMemberProfile.id)).length)} days</span></div>
-<span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong></div>
+              <div>
+                <div className="flex justify-between py-1 text-xs">
+                  <span className="text-neutral-400">Check-ins in last 30 days:</span>
+                  <span className="text-lime-400 font-bold">
+                    {((dbData?.attendance || recentCheckIns || []).filter((a: any) => 
+                      (a.memberCode && selectedMemberProfile?.code && a.memberCode === selectedMemberProfile.code) || 
+                      (a.memberName && selectedMemberProfile?.name && (a.memberName || "").toLowerCase() === (selectedMemberProfile.name || "").toLowerCase()) || 
+                      (a.name && selectedMemberProfile?.name && (a.name || "").toLowerCase() === (selectedMemberProfile.name || "").toLowerCase()) ||
+                      (a.memberId && selectedMemberProfile?.id && a.memberId === selectedMemberProfile.id)
+                    ).length)} days
+                  </span>
+                </div>
+                <span className="text-neutral-400">Status:</span> <strong className="text-green-500 block mt-0.5">{selectedMemberProfile.status}</strong>
+              </div>
               <div><span className="text-neutral-400">Validity (DD-MM-YYYY):</span> <strong className={`block mt-0.5 ${textColor}`}>{formatDDMMYYYY(selectedMemberProfile.startDate)} to {formatDDMMYYYY(selectedMemberProfile.expires)}</strong></div>
               <div><span className="text-neutral-400">Days Left:</span> <strong className="text-amber-500 block mt-0.5">{getDaysLeft(selectedMemberProfile.expires)} days</strong></div>
               <div><span className="text-neutral-400">Outstanding Dues:</span> <strong className="text-rose-500 block mt-0.5">₹{selectedMemberProfile.dues}</strong></div>
             </div>
             <div className="flex gap-1.5 pt-1">
               <button 
-                onClick={() => { handleFrontDeskCheckIn(selectedMemberProfile.id); setSelectedMemberProfile(null); }}
+                onClick={() => { handleFrontDeskCheckIn(selectedMemberProfile.code || selectedMemberProfile.id); setSelectedMemberProfile(null); }}
                 className="flex-1 py-2 bg-[#84cc16] text-black font-bold rounded-lg text-xs"
               >
                 Check In
@@ -3296,7 +3272,7 @@ export default function RepFlowApp() {
               </div>
             </div>
 
-            {/* Tax / GST Checkbox (Clean Rupee Symbol) */}
+            {/* Tax / GST Checkbox */}
             <div className={`p-2.5 rounded-xl border flex items-center justify-between ${innerBg}`}>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
@@ -3336,7 +3312,6 @@ export default function RepFlowApp() {
               </div>
             </div>
 
-            {/* Summary Breakdown Footer (Clean Rupee Only) */}
             <div className={`p-2.5 rounded-xl border space-y-1 text-[11px] ${innerBg}`}>
               <div className="flex justify-between"><span>Subtotal:</span><span>₹{rawSubtotal}</span></div>
               {discountAmount > 0 && <div className="flex justify-between text-rose-500"><span>Discount ({newMemberForm.discountPercent}%):</span><span>- ₹{discountAmount}</span></div>}
@@ -3851,13 +3826,13 @@ export default function RepFlowApp() {
         </div>
       )}
 
-      {/* MEMBER PASS & INVOICE POPUP (Clean Rupee, zero dollar signs, clean text) */}
+      {/* MEMBER PASS & INVOICE POPUP */}
       {createdMemberCard && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[999]" onClick={(e) => e.stopPropagation()}>
           <div className={`${cardBg} border-2 border-[#84cc16] p-5 rounded-2xl max-w-sm w-full space-y-3 text-center shadow-2xl`}>
             <CheckCircle2 className="w-9 h-9 text-[#84cc16] mx-auto" />
             <h3 className={`text-base sm:text-lg font-black ${textColor}`}>{createdMemberCard.name} Registered!</h3>
-            <p className="text-xs text-[#84cc16] font-mono font-bold">MEMBER CODE: {createdMemberCard.id}</p>
+            <p className="text-xs text-[#84cc16] font-mono font-bold">MEMBER CODE: {createdMemberCard.code || createdMemberCard.id}</p>
             
             <div className={`p-2.5 border rounded-xl text-left text-xs space-y-1 font-mono ${innerBg}`}>
               <div>Mobile: +91 {createdMemberCard.phone}</div>
@@ -3881,12 +3856,9 @@ export default function RepFlowApp() {
                   const admDetailsText = createdMemberCard.admissionAmount > 0 ? '\n- Admission Fee: ₹500' : '';
                   const duesText = createdMemberCard.dues > 0 ? `\n- Balance Dues: ₹${createdMemberCard.dues}` : '\n- Balance Dues: ₹0 (Fully Paid)';
                   
-                  const welcomeMsg = `Hello ${createdMemberCard.name} !\n\nWelcome to ${dbData?.gymProfile?.name || 'Iron Temple Fitness'}.\nYour gym membership is successfully confirmed!\n\nMEMBERSHIP SUMMARY:\n- Member ID: ${createdMemberCard.id}\n- Plan: ${createdMemberCard.plan} (₹${createdMemberCard.basePlanAmount})${admDetailsText}${ptDetailsText}\n- Total Paid: ₹${createdMemberCard.totalPaid} (via ${createdMemberCard.paymentMethod})${duesText}\n- Validity: ${formatDDMMYYYY(createdMemberCard.startDate)} to ${formatDDMMYYYY(createdMemberCard.expires)}\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`;
+                  const welcomeMsg = `Hello ${createdMemberCard.name} !\n\nWelcome to ${dbData?.gymProfile?.name || 'Iron Temple Fitness'}.\nYour gym membership is successfully confirmed!\n\nMEMBERSHIP SUMMARY:\n- Member ID: ${createdMemberCard.code || createdMemberCard.id}\n- Plan: ${createdMemberCard.plan} (₹${createdMemberCard.basePlanAmount})${admDetailsText}${ptDetailsText}\n- Total Paid: ₹${createdMemberCard.totalPaid} (via ${createdMemberCard.paymentMethod})${duesText}\n- Validity: ${formatDDMMYYYY(createdMemberCard.startDate)} to ${formatDDMMYYYY(createdMemberCard.expires)}\n\nYou can view/download your invoice (PDF) here:\n${invoiceFullUrl}\n\nThank you for being a valued member!`;
 
-                  // Download invoice in background
                   downloadOfficialTemplatePDF(createdMemberCard);
-
-                  // Open WhatsApp
                   openWhatsApp(createdMemberCard.phone, welcomeMsg);
                 }} 
                 className="py-2 bg-[#84cc16] text-black font-bold rounded-xl text-xs flex items-center justify-center gap-1 hover:bg-[#72b012] transition"
