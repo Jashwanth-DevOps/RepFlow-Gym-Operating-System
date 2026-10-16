@@ -7,25 +7,22 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const email = (body.email || '').trim().toLowerCase();
-    const password = (body.password || '').trim();
+    const { email, password } = await req.json();
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim();
 
-    if (!email || !password) {
+    if (!cleanEmail || !cleanPass) {
       return NextResponse.json({ success: false, message: 'Email and password required' }, { status: 400 });
     }
 
-    // Check user table
     const user = await prisma.user.findFirst({
-      where: {
-        email: { equals: email, mode: 'insensitive' }
-      }
+      where: { email: { equals: cleanEmail, mode: 'insensitive' } }
     });
 
     if (user) {
-      if (user.password !== password) {
+      if (user.password !== cleanPass) {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
@@ -39,32 +36,30 @@ export async function POST(request: Request) {
       });
     }
 
-    // Default owner fallback if user table does not have it yet
-    if (email === 'owner@gym.com') {
-      if (password !== 'password123') {
+    if (cleanEmail === 'owner@gym.com') {
+      if (cleanPass !== 'password123') {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: { id: 'owner_default', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' }
+        user: { id: 'owner_1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' }
       });
     }
 
-    // Check trainer table
     const trainers = await prisma.trainer.findMany().catch(() => []);
     const match = trainers.find((t: any) => {
       const te = ((t as any).email || `${t.phone}@gym.com`).toLowerCase().trim();
-      return te === email || t.phone === email;
+      return te === cleanEmail || t.phone === cleanEmail;
     });
 
     if (match) {
-      const matchPass = (match as any).password || 'password123';
-      if (password !== matchPass) {
+      const expected = (match as any).password || 'password123';
+      if (cleanPass !== expected) {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: { id: match.id, name: match.name, email: email, role: 'Trainer' }
+        user: { id: match.id, name: match.name, email: cleanEmail, role: 'Trainer' }
       });
     }
 
