@@ -14,29 +14,30 @@ export async function POST(req: Request) {
     const cleanPass = (newPassword || '').trim();
 
     if (!cleanEmail || !cleanPass) {
-      return NextResponse.json({ success: false, message: 'Email and new password required' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Email and new password required.' }, { status: 400 });
     }
 
-    await prisma.user.upsert({
-      where: { email: cleanEmail },
-      update: { password: cleanPass },
-      create: {
-        email: cleanEmail,
-        password: cleanPass,
-        name: cleanEmail === 'owner@gym.com' ? 'Gym Owner' : 'Trainer',
-        role: cleanEmail === 'owner@gym.com' ? 'OWNER' : 'TRAINER'
-      }
-    });
+    // 1. Update Trainer password if it's a trainer
+    await prisma.$executeRawUnsafe(
+      `UPDATE "Trainer" SET "password" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE LOWER("email") = $2`,
+      cleanPass, cleanEmail
+    ).catch(() => null);
 
-    const trainers = await prisma.trainer.findMany().catch(() => []);
-    for (const t of trainers) {
-      const te = ((t as any).email || `${t.phone}@gym.com`).toLowerCase().trim();
-      if (te === cleanEmail || t.phone === cleanEmail) {
-        await prisma.$executeRawUnsafe(
-          `UPDATE "Trainer" SET "password" = $1 WHERE "id" = $2`,
-          cleanPass, t.id
-        ).catch(() => null);
-      }
+    // 2. Update User password
+    const userUpdate = await prisma.$executeRawUnsafe(
+      `UPDATE "User" SET "password" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE LOWER("email") = $2`,
+      cleanPass, cleanEmail
+    ).catch(() => 0);
+
+    // 3. If user doesn't exist yet, insert them safely
+    if (userUpdate === 0) {
+      const id = `usr_${Date.now()}`;
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "User" ("id", "name", "email", "password", "role", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, 'OWNER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT ("email") DO UPDATE SET "password" = EXCLUDED."password"`,
+        id, cleanEmail.split('@')[0], cleanEmail, cleanPass
+      ).catch(() => null);
     }
 
     return NextResponse.json({ success: true, message: 'Password reset successfully!' });
