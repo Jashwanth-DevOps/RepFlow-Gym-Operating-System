@@ -12,6 +12,26 @@ import {
 } from 'lucide-react';
 import { translations } from './translations';
 
+function GymRexLogo({ className = "w-8 h-8" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="4" width="8" height="6" fill="#84cc16" />
+      <rect x="20" y="6" width="2" height="4" fill="#84cc16" />
+      <rect x="26" y="6" width="2" height="2" fill="#000" />
+      <rect x="24" y="10" width="4" height="2" fill="#84cc16" />
+      <rect x="18" y="10" width="6" height="8" fill="#84cc16" />
+      <rect x="14" y="12" width="4" height="6" fill="#84cc16" />
+      <rect x="10" y="10" width="4" height="4" fill="#84cc16" />
+      <rect x="24" y="14" width="4" height="2" fill="#84cc16" />
+      <rect x="16" y="18" width="4" height="4" fill="#84cc16" />
+      <rect x="20" y="18" width="4" height="3" fill="#84cc16" />
+      <rect x="8" y="24" width="32" height="4" rx="2" fill="#22c55e" />
+      <rect x="6" y="23" width="36" height="6" rx="2" stroke="#84cc16" strokeWidth="1.5" />
+      <path d="M34 23L38 15M36 15H40" stroke="#84cc16" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function RepFlowApp() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<'en' | 'te'>('en');
@@ -106,6 +126,8 @@ export default function RepFlowApp() {
   const [payMemberSearch, setPayMemberSearch] = useState('');
 
   const [checkInInput, setCheckInInput] = useState('');
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [expenseCategorySelect, setExpenseCategorySelect] = useState('Rent');
   const [selectedHistoryDate, setSelectedHistoryDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [recentCheckIns, setRecentCheckIns] = useState<any[]>([]);
   const [checkInNotice, setCheckInNotice] = useState<any>(null);
@@ -209,16 +231,19 @@ export default function RepFlowApp() {
 
   useEffect(() => {
     fetchData();
-    const savedTab = localStorage.getItem('repflow_active_tab');
+    const savedTab = sessionStorage.getItem('gymrex_active_tab');
     if (savedTab) setCurrentTab(savedTab);
 
-    const savedAuth = localStorage.getItem('repflow_user_session');
+    const savedAuth = sessionStorage.getItem('gymrex_user_session');
     if (savedAuth) {
       const parsed = JSON.parse(savedAuth);
       setActiveUser(parsed);
       setIsAuthenticated(true);
       if (parsed.role === 'Trainer') setCurrentTab('trainers');
       else if (parsed.role === 'Accountant') setCurrentTab('collections');
+    } else {
+      setIsAuthenticated(false);
+      setActiveUser(null);
     }
   }, []);
 
@@ -227,7 +252,7 @@ export default function RepFlowApp() {
     setMobileMenuOpen(false);
     setShowNewDropdown(false);
     setUserMenuOpen(false);
-    localStorage.setItem('repflow_active_tab', tab);
+    sessionStorage.setItem('gymrex_active_tab', tab);
   };
 
   const toggleTheme = () => {
@@ -411,7 +436,7 @@ export default function RepFlowApp() {
       }
       setActiveUser(data.user);
       setIsAuthenticated(true);
-      localStorage.setItem('repflow_user_session', JSON.stringify(data.user));
+      sessionStorage.setItem('gymrex_user_session', JSON.stringify(data.user));
       navigateTab(data.user.role === 'Trainer' ? 'trainers' : data.user.role === 'Accountant' ? 'collections' : 'commandCenter');
     } catch (err) {
       setLoginError('Authentication server error.');
@@ -436,11 +461,17 @@ export default function RepFlowApp() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setActiveUser(null);
+    setLoginEmail('');
+    setLoginPass('');
+    sessionStorage.removeItem('gymrex_user_session');
+    sessionStorage.removeItem('gymrex_active_tab');
     localStorage.removeItem('repflow_user_session');
     localStorage.removeItem('repflow_active_tab');
   };
 
   const handleFrontDeskCheckIn = async (inputVal: string) => {
+    if (isCheckingIn) return;
     setCheckInNotice(null);
     const cleaned = (inputVal || '').trim().toUpperCase();
     if (!cleaned) return;
@@ -450,7 +481,7 @@ export default function RepFlowApp() {
       return;
     }
 
-    const match = (dbData?.members || []).find((m: any) => (m?.code || '').toUpperCase() === cleaned || (m?.id || '').toUpperCase() === cleaned);
+    const match = (dbData?.members || []).find((m: any) => (((m?.code || m?.id || "").toUpperCase())) === cleaned);
 
     if (!match) {
       setCheckInNotice({ type: 'error', message: `No active member found with ID "${cleaned}".` });
@@ -458,19 +489,24 @@ export default function RepFlowApp() {
     }
 
     const currentAttendance = dbData?.attendance || recentCheckIns || [];
-    const alreadyCheckedIn = currentAttendance.find((c: any) => (c.memberId === match.id || c.memberCode === match.code) && String(c.date || "").split('T')[0] === todayStr);
+    const alreadyCheckedIn = currentAttendance.find((c: any) =>
+      (c.id === match.id || c.memberId === match.id || c.memberCode === match.code || (c.name && c.name.toLowerCase() === match.name.toLowerCase())) &&
+      String(c.date || "").split('T')[0] === todayStr
+    );
+
     if (alreadyCheckedIn) {
       setCheckInNotice({ type: 'warning', message: `${match.name} was ALREADY checked in today at ${alreadyCheckedIn.time}.` });
       setCheckInInput('');
       return;
     }
 
+    setIsCheckingIn(true);
     const nowTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
     try {
-      await fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           memberId: match.id,
           memberCode: match.code,
@@ -485,7 +521,9 @@ export default function RepFlowApp() {
       setCheckInNotice({ type: 'success', message: `${match.name} (${match.code}) checked in successfully at ${nowTime}!` });
       setCheckInInput('');
     } catch (e: any) {
-      setCheckInNotice({ type: 'warning', message: 'Attendance sync error: ' + e.message });
+      setCheckInNotice({ type: 'error', message: 'Sync failed: ' + e.message });
+    } finally {
+      setIsCheckingIn(false);
     }
   };
 
@@ -875,6 +913,34 @@ export default function RepFlowApp() {
     }
   };
 
+  const handleSettleDue = async (m: any) => {
+    try {
+      await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member: m.name,
+          phone: m.phone || '',
+          amount: Number(m.dues),
+          method: 'UPI',
+          plan: 'Dues Clearance',
+          note: 'Settled via Collections tab',
+          date: todayStr,
+          operator: activeUser?.name || 'Owner'
+        })
+      });
+      await fetch(`/api/members/${m.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...m, dues: 0 })
+      });
+      await fetchData();
+      alert(`Dues of ₹${m.dues} cleared for ${m.name}!`);
+    } catch (e) {
+      alert('Error settling dues.');
+    }
+  };
+
   const handleRecordPayment = async (e: any) => {
     e.preventDefault();
     if (!canPerform('Collect payments')) {
@@ -913,8 +979,9 @@ export default function RepFlowApp() {
       alert('Your role does not have permission to record expenses.');
       return;
     }
+    const cat = expenseCategorySelect === 'Other' ? e.target.otherCategory?.value : expenseCategorySelect;
     const payload = {
-      category: e.target.category.value,
+      category: cat || 'General',
       paidTo: e.target.paidTo.value,
       amount: Number(e.target.amount.value),
       method: e.target.method.value,
@@ -1250,8 +1317,8 @@ export default function RepFlowApp() {
         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="bg-[#84cc16] text-black font-extrabold text-xl px-2.5 py-1 rounded">R</div>
-              <span className="text-2xl font-bold tracking-tight">RepFlow</span>
+              <GymRexLogo className="w-9 h-9" />
+              <span className="text-3xl font-black tracking-tight text-[#84cc16]">GymRex</span>
             </div>
             <h1 className="text-4xl font-extrabold leading-tight">
               Your fees collect themselves. <span className="text-[#84cc16]">Real-time gym management</span> for modern fitness owners.
@@ -1405,10 +1472,10 @@ export default function RepFlowApp() {
         <div className="space-y-4 pb-28">
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center space-x-3">
-              <div className="bg-[#84cc16] text-black font-extrabold text-lg px-2 py-0.5 rounded">R</div>
+              <GymRexLogo className="w-8 h-8" />
               <div>
-                <div className={`font-bold text-sm tracking-tight ${textColor}`}>{dbData?.gymProfile?.name || 'Iron Temple Fitness'}</div>
-                <div className="text-[10px] text-neutral-400">{dbData?.gymProfile?.branch}</div>
+                <div className="font-black text-base text-[#84cc16] tracking-tight">GymRex</div>
+                <div className="text-[10px] text-neutral-400">{dbData?.gymProfile?.name || 'Iron Temple Fitness'}</div>
               </div>
             </div>
             <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-neutral-400"><X className="w-5 h-5" /></button>
@@ -1435,7 +1502,7 @@ export default function RepFlowApp() {
             {activeUser?.role !== 'Trainer' && (
               <button onClick={() => navigateTab('leads')} className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg ${currentTab === 'leads' ? 'bg-[#84cc16] text-black font-bold' : `${subTextColor} hover:${textColor}`}`}>
                 <div className="flex items-center gap-3"><UserPlus className="w-4 h-4" /> Leads</div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${innerBg}`}>{dbData?.leads?.length || 0}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${innerBg}`}>{(dbData?.leads || []).length}</span>
               </button>
             )}
             <button onClick={() => navigateTab('trainers')} className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg ${currentTab === 'trainers' ? 'bg-[#84cc16] text-black font-bold' : `${subTextColor} hover:${textColor}`}`}>
@@ -1507,7 +1574,7 @@ export default function RepFlowApp() {
         
         {/* DESKTOP HEADER */}
         <header className={`hidden md:flex h-14 border-b items-center justify-between px-6 ${theme === 'dark' ? 'bg-[#121418] border-neutral-800' : 'bg-white border-slate-200'}`}>
-          <div className="text-xs font-semibold text-neutral-400">RepFlow OS • Real-Time Engine</div>
+          <div className="text-xs font-semibold text-neutral-400">GymRex OS • High Performance Real-Time Engine</div>
 
           <div className="flex items-center gap-3 relative">
             {activeUser?.role !== 'Trainer' && (
@@ -1761,8 +1828,8 @@ export default function RepFlowApp() {
                       <div className="h-1.5 rounded-full bg-neutral-800"><div style={{ width: `${(dbData?.members || []).length > 0 ? Math.round((activeMembersCount / (dbData?.members || []).length) * 100) : 100}%` }} className="h-full bg-[#84cc16] rounded-full" /></div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-[11px] mb-1"><span>Members on AutoPay</span><strong>22%</strong></div>
-                      <div className="h-1.5 rounded-full bg-neutral-800"><div className="w-[22%] h-full bg-[#84cc16] rounded-full" /></div>
+                      <div className="flex justify-between text-[11px] mb-1"><span>Payment Settlement Rate</span><strong>{totalMonthRevenue > 0 ? '100%' : '0%'}</strong></div>
+                      <div className="h-1.5 rounded-full bg-neutral-800"><div style={{ width: totalMonthRevenue > 0 ? '100%' : '0%' }} className="h-full bg-[#84cc16] rounded-full" /></div>
                     </div>
                   </div>
                   <div className={`p-2.5 rounded-xl border text-[11px] font-mono mt-2 ${innerBg}`}>
@@ -2103,7 +2170,7 @@ export default function RepFlowApp() {
                         <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{m.name}</td>
                         <td className="p-2.5 sm:p-3 font-bold text-rose-500">₹{m.dues}</td>
                         <td className="p-2.5 sm:p-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={(e) => { e.stopPropagation(); setPayForm({ member: m.name, phone: m.phone, amount: String(m.dues), method: 'UPI', category: 'Membership', note: 'Dues settled' }); setShowPaymentModal(true); }} className="px-3 py-1 bg-[#84cc16] text-black font-bold rounded text-xs">
+                          <button onClick={(e) => { e.stopPropagation(); handleSettleDue(m); }} className="px-3 py-1 bg-[#84cc16] text-black font-bold rounded text-xs">
                             Collect
                           </button>
                         </td>
@@ -2246,7 +2313,11 @@ export default function RepFlowApp() {
                         <td className="p-3">{exp.method}</td>
                         <td className="p-3 font-bold text-rose-500">₹{exp.amount}</td>
                         <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={async () => { await fetch(`/api/expenses/${exp.id}`, { method: 'DELETE' }); fetchData(); }} className="text-neutral-400 hover:text-rose-500 p-1">
+                          <button onClick={async () => {
+                            if (!confirm('Delete this expense?')) return;
+                            await fetch(`/api/expenses/${exp.id}`, { method: 'DELETE' });
+                            fetchData();
+                          }} className="text-neutral-400 hover:text-rose-500 p-1">
                             <Trash2 className="w-4 h-4 inline" />
                           </button>
                         </td>
@@ -3754,9 +3825,25 @@ export default function RepFlowApp() {
             </div>
             <div>
               <label className="text-neutral-400">Category</label>
-              <select name="category" className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`}>
-                <option>Rent</option><option>Salaries</option><option>Electricity</option><option>Equipment</option><option>Marketing</option>
+              <select
+                name="category"
+                value={expenseCategorySelect}
+                onChange={(e) => setExpenseCategorySelect(e.target.value)}
+                className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`}
+              >
+                <option>Rent</option>
+                <option>Salaries</option>
+                <option>Electricity</option>
+                <option>Equipment</option>
+                <option>Maintenance</option>
+                <option>Other</option>
               </select>
+              {expenseCategorySelect === 'Other' && (
+                <div className="mt-2">
+                  <label className="text-neutral-400">Custom Category Name</label>
+                  <input name="otherCategory" required placeholder="Type custom expense type..." className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
+                </div>
+              )}
             </div>
             <div>
               <label className="text-neutral-400">Paid to</label>
