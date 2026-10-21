@@ -301,7 +301,7 @@ export default function RepFlowApp() {
   };
 
   const totalCollectedToday = (dbData?.payments || [])
-    .filter((p: any) => p.date === todayStr)
+    .filter((p: any) => String(p.date || '').split('T')[0] === todayStr)
     .reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
 
   const totalMonthRevenue = (dbData?.payments || [])
@@ -732,15 +732,21 @@ export default function RepFlowApp() {
     };
 
     try {
-      await fetch('/api/leads', {
+      const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      setShowNewLeadModal(false);
-      fetchData();
+      if (res.ok) {
+        setShowNewLeadModal(false);
+        await fetchData();
+        alert('Lead registered successfully!');
+      } else {
+        alert('Unable to register lead. Please try again.');
+      }
     } catch (err) {
       console.error(err);
+      alert('Unable to register lead. Please try again.');
     }
   };
 
@@ -1148,8 +1154,8 @@ export default function RepFlowApp() {
       <tr>
         <td>${formatDDMMYYYY(e.date)}</td>
         <td>${e.category}</td>
-        <td>${e.paidTo}</td>
-        <td>${e.method}</td>
+        <td>${e.paidTo || e.title || 'Vendor'}</td>
+        <td>${e.method || 'UPI'}</td>
         <td style="font-weight:bold; color:red;">₹${e.amount}</td>
       </tr>
     `).join('');
@@ -1334,7 +1340,7 @@ export default function RepFlowApp() {
                   type="email" 
                   value={loginEmail} 
                   onChange={(e) => setLoginEmail(e.target.value)} 
-                  placeholder="owner@gym.com" 
+                  placeholder="Enter your email" 
                   className={`w-full mt-1 px-3 py-2 border rounded-lg text-sm outline-none ${theme === 'dark' ? 'bg-[#0f1115] text-white border-neutral-800' : 'bg-slate-50 text-slate-900 border-slate-300'}`} 
                   required 
                 />
@@ -2141,8 +2147,24 @@ export default function RepFlowApp() {
                             >
                               -1 Session
                             </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!confirm('Are you sure you want to delete this PT assignment?')) return;
+                                const res = await fetch(`/api/pt-assign/${pt.id}`, { method: 'DELETE' });
+                                if (!res.ok) {
+                                  alert('Unable to delete PT assignment. Please try again.');
+                                  return;
+                                }
+                                await fetchData();
+                              }}
+                              className="p-1 text-neutral-400 hover:text-rose-500 rounded"
+                              title="Delete PT Assignment"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 inline" />
+                            </button>
                             {canPerform('Manage PT sessions') && (
-                              <button onClick={(e) => { e.stopPropagation(); setEditPtMemberSearch(''); setShowEditPTModal(pt); }} className="p-1 text-neutral-400 hover:text-[#84cc16]">
+                              <button onClick={(e) => { e.stopPropagation(); setEditPtMemberSearch(''); setShowEditPTModal(pt); }} className="p-1 text-neutral-400 hover:text-[#84cc16]" title="Edit PT Assignment">
                                 <Edit3 className="w-3.5 h-3.5 inline" />
                               </button>
                             )}
@@ -2170,7 +2192,41 @@ export default function RepFlowApp() {
                         <td className={`p-2.5 sm:p-3 font-semibold ${textColor}`}>{m.name}</td>
                         <td className="p-2.5 sm:p-3 font-bold text-rose-500">₹{m.dues}</td>
                         <td className="p-2.5 sm:p-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={(e) => { e.stopPropagation(); handleSettleDue(m); }} className="px-3 py-1 bg-[#84cc16] text-black font-bold rounded text-xs">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const dueAmount = Number(m.dues || 0);
+                              if (dueAmount <= 0) return;
+                              try {
+                                const paymentRes = await fetch('/api/payments', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    member: m.name,
+                                    phone: m.phone || '',
+                                    amount: dueAmount,
+                                    method: 'UPI',
+                                    plan: 'Dues Settlement',
+                                    date: todayStr,
+                                    operator: activeUser?.name || 'Owner'
+                                  })
+                                });
+                                if (!paymentRes.ok) throw new Error('Payment recording failed');
+                                const memberRes = await fetch(`/api/members/${m.id}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ ...m, dues: 0 })
+                                });
+                                if (!memberRes.ok) throw new Error('Member dues update failed');
+                                await fetchData();
+                                alert(`Dues of ₹${dueAmount} cleared for ${m.name}!`);
+                              } catch (err) {
+                                console.error(err);
+                                alert('Error updating dues');
+                              }
+                            }}
+                            className="px-3 py-1 bg-[#84cc16] text-black font-bold rounded text-xs"
+                          >
                             Collect
                           </button>
                         </td>
@@ -3544,12 +3600,12 @@ export default function RepFlowApp() {
             </div>
             <div>
               <label className="text-neutral-400">Full Name</label>
-              <input name="trName" required placeholder="e.g. Sameer Khan" className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
+              <input name="trName" required placeholder="Enter trainer's full name" className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-neutral-400">Login Email</label>
-                <input name="trEmail" type="email" required placeholder="trainer@gym.com" className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
+                <input name="trEmail" type="email" required placeholder="Enter trainer's email" className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`} />
               </div>
               <div>
                 <label className="text-neutral-400">Password</label>
