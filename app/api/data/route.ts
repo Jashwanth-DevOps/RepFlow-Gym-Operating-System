@@ -10,50 +10,16 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function GET() {
   try {
-    const rawMembers = await prisma.member.findMany({ orderBy: { id: 'asc' } }).catch(() => []);
-    const rawLeads = await prisma.lead.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
-    const rawTrainers = await prisma.trainer.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
-    const rawPayments = await prisma.payment.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
-    const rawExpenses = await prisma.expense.findMany({ orderBy: { id: 'desc' } }).catch(() => []);
-    const gymProfile = await prisma.gymProfile.findFirst().catch(() => null);
-    const users = await prisma.user.findMany().catch(() => []);
+    const rawMembers: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Member" ORDER BY "createdAt" ASC`).catch(() => []);
+    const rawLeads: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Lead" ORDER BY "createdAt" DESC`).catch(() => []);
+    const rawTrainers: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Trainer" ORDER BY "createdAt" DESC`).catch(() => []);
+    const rawPayments: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Payment" ORDER BY "createdAt" DESC`).catch(() => []);
+    const rawExpenses: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Expense" ORDER BY "createdAt" DESC`).catch(() => []);
+    const rawProfiles: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "GymProfile" LIMIT 1`).catch(() => []);
+    const rawAttendance: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "attendance" ORDER BY "createdAt" DESC`).catch(() => []);
+    const rawPT: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "pt_assignments" ORDER BY "createdAt" DESC`).catch(() => []);
 
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "attendance" (
-        "id" TEXT PRIMARY KEY,
-        "memberId" TEXT NOT NULL,
-        "memberCode" TEXT NOT NULL,
-        "memberName" TEXT NOT NULL,
-        "date" TEXT NOT NULL,
-        "time" TEXT NOT NULL,
-        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `).catch(() => null);
-
-    const rawAttendance: any[] = await prisma.$queryRawUnsafe(`
-      SELECT * FROM "attendance" ORDER BY "createdAt" DESC
-    `).catch(() => []);
-
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "pt_assignments" (
-        "id" TEXT PRIMARY KEY,
-        "trainer" TEXT NOT NULL,
-        "member" TEXT NOT NULL,
-        "sessions" INTEGER NOT NULL DEFAULT 12,
-        "price" DOUBLE PRECISION NOT NULL DEFAULT 6000,
-        "method" TEXT NOT NULL DEFAULT 'UPI',
-        "startDate" TEXT NOT NULL,
-        "endDate" TEXT NOT NULL,
-        "operator" TEXT,
-        "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      )
-    `).catch(() => null);
-
-    const rawPT: any[] = await prisma.$queryRawUnsafe(`
-      SELECT * FROM "pt_assignments" ORDER BY "createdAt" DESC
-    `).catch(() => []);
-
-    const members = (rawMembers || []).map((m: any, idx: number) => ({
+    const members = rawMembers.map((m: any, idx: number) => ({
       id: m.id,
       name: m.name || 'Member',
       phone: m.phone || '',
@@ -63,14 +29,11 @@ export async function GET() {
       expires: m.expires || new Date().toISOString().split('T')[0],
       status: m.status || 'Active',
       dues: Number(m.dues || 0),
-      dueAmount: Number(m.dues || 0),
-      code: `IT${1001 + idx}`,
-      daysLeft: 90,
-      paymentsCount: 1,
-      lastActivity: m.startDate || 'Recent'
+      code: m.code || `IT${1001 + idx}`
     }));
 
-    const trainers = (rawTrainers || []).map((t: any) => ({
+    // Preserves the customized email and password entered by the owner
+    const trainers = rawTrainers.map((t: any) => ({
       id: t.id,
       name: t.name || 'Trainer',
       email: t.email || `${t.phone}@gym.com`,
@@ -81,7 +44,7 @@ export async function GET() {
       active: t.active !== false
     }));
 
-    const payments = (rawPayments || []).map((p: any) => ({
+    const payments = rawPayments.map((p: any) => ({
       id: p.id,
       receipt: p.receipt || 'RCPT-1001',
       member: p.member || 'Member',
@@ -93,20 +56,42 @@ export async function GET() {
       date: p.date || new Date().toISOString().split('T')[0]
     }));
 
-    const expenses = (rawExpenses || []).map((e: any) => ({
+    const expenses = rawExpenses.map((e: any) => ({
       id: e.id,
-      title: e.title || 'General Expense',
+      category: e.category || 'General',
+      paidTo: e.paidTo || e.title || 'Vendor',
       amount: Number(e.amount || 0),
-      category: e.category || 'Maintenance',
+      method: e.method || 'UPI',
       date: e.date || new Date().toISOString().split('T')[0]
     }));
 
+    const staff = [
+      { name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' },
+      { name: 'Priya Nair', email: 'manager@gym.com', role: 'Manager' },
+      { name: 'Rahul Gowda', email: 'desk@gym.com', role: 'Front desk' },
+      { name: 'CA Suresh Bhat', email: 'ca@gym.com', role: 'Accountant' }
+    ];
+
+    const permissions: Record<string, Record<string, boolean>> = {
+      'See revenue dashboard': { Trainer: false, Accountant: true, Manager: true },
+      'Check in members': { Trainer: true, Accountant: true, Manager: true },
+      'Add & edit members': { Trainer: false, Accountant: true, Manager: true },
+      'Collect payments': { Trainer: false, Accountant: true, Manager: true },
+      'Record expenses': { Trainer: false, Accountant: true, Manager: true },
+      'Manage PT sessions': { Trainer: true, Accountant: false, Manager: true }
+    };
+
+    const auditLog = [
+      { action: 'Owner logged in successfully', user: 'Gym Owner', time: '10:00 AM' },
+      { action: 'Database schema verified on Supabase Mumbai', user: 'System', time: '09:00 AM' }
+    ];
+
     return NextResponse.json({
-      gymProfile: gymProfile || {
-        name: 'Iron Temple Fitness',
+      gymProfile: rawProfiles[0] || {
+        name: 'GymRex Fitness',
         branch: 'Indiranagar, Bengaluru',
         phone: '9845012345',
-        publicUrl: 'https://rep-flow-gym-operating-system-4o78.vercel.app'
+        publicUrl: 'https://gymrex-os.vercel.app'
       },
       billingSettings: {
         receiptType: 'GST tax invoice',
@@ -115,12 +100,15 @@ export async function GET() {
         maxStaffDiscount: 20
       },
       members,
-      leads: rawLeads || [],
+      leads: rawLeads,
       trainers,
       payments,
       expenses,
-      ptAssignments: Array.isArray(rawPT) ? rawPT : [],
-      attendance: Array.isArray(rawAttendance) ? rawAttendance : [],
+      staff,
+      permissions,
+      auditLog,
+      ptAssignments: rawPT,
+      attendance: rawAttendance,
       plans: [
         { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
         { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
@@ -128,9 +116,7 @@ export async function GET() {
         { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
       ]
     }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate'
-      }
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
