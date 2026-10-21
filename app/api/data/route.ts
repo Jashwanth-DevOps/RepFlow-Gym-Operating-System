@@ -70,18 +70,16 @@ export async function GET() {
       lastActivity: m.startDate || 'Recent'
     }));
 
-    const trainers = (rawTrainers || []).map((t: any) => {
-      const matchUser = users.find((u: any) => u.name === t.name || u.email?.startsWith(t.phone));
-      return {
-        id: t.id,
-        name: t.name || 'Trainer',
-        email: matchUser?.email || (t as any).email || `${t.phone}@gym.com`,
-        phone: t.phone || '',
-        password: matchUser?.password || (t as any).password || 'password123',
-        specialty: t.specialty || 'Strength & HIIT',
-        active: t.active !== false
-      };
-    });
+    const trainers = (rawTrainers || []).map((t: any) => ({
+      id: t.id,
+      name: t.name || 'Trainer',
+      email: t.email || `${t.phone}@gym.com`,
+      phone: t.phone || '',
+      password: t.password || 'password123',
+      specialty: t.specialty || 'Strength & HIIT',
+      rating: t.rating || '5.0',
+      active: t.active !== false
+    }));
 
     const payments = (rawPayments || []).map((p: any) => ({
       id: p.id,
