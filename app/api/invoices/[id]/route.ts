@@ -10,12 +10,11 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const id = params.id;
-    
-    // Find member or payment
+
     const members: any[] = await prisma.$queryRawUnsafe(
       `SELECT * FROM "Member" WHERE "id" = $1 OR "code" = $1 LIMIT 1`, id
     ).catch(() => []);
-    
+
     const payments: any[] = await prisma.$queryRawUnsafe(
       `SELECT * FROM "Payment" WHERE "receipt" = $1 OR "id" = $1 LIMIT 1`, id
     ).catch(() => []);
@@ -94,9 +93,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       </html>
     `;
 
-    return new NextResponse(html, {
-      headers: { 'Content-Type': 'text/html' }
-    });
+    return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
