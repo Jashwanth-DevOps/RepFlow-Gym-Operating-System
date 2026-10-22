@@ -18,6 +18,8 @@ export async function GET() {
     const rawProfiles: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "GymProfile" LIMIT 1`).catch(() => []);
     const rawAttendance: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "attendance" ORDER BY "createdAt" DESC`).catch(() => []);
     const rawPT: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "pt_assignments" ORDER BY "createdAt" DESC`).catch(() => []);
+    const rawPlans: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Plan" ORDER BY "price" ASC`).catch(() => []);
+    const rawBilling: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "BillingSettings" LIMIT 1`).catch(() => []);
 
     const members = rawMembers.map((m: any, idx: number) => ({
       id: m.id,
@@ -89,20 +91,37 @@ export async function GET() {
       { action: 'Daily automated backup completed', user: 'System', time: '06:00 AM' }
     ];
 
+    const gymProfile = rawProfiles[0] || {
+      name: 'GymRex Fitness',
+      branch: 'Indiranagar, Bengaluru',
+      phone: '9845012345',
+      publicUrl: 'https://gymrex-os.vercel.app',
+      gstin: '29AABCI1234F1Z8'
+    };
+
+    const billingSettings = rawBilling[0] || {
+      receiptType: 'GST tax invoice',
+      gstin: rawProfiles[0]?.gstin || '29AABCI1234F1Z8',
+      taxPercent: 18,
+      maxStaffDiscount: 20
+    };
+
+    const plans = rawPlans.length > 0 ? rawPlans.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      days: Number(p.days),
+      price: Number(p.price),
+      sessions: p.sessions || 'Standard Gym Access'
+    })) : [
+      { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
+      { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
+      { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
+      { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
+    ];
+
     return NextResponse.json({
-      gymProfile: rawProfiles[0] || {
-        name: 'GymRex Fitness',
-        branch: 'Indiranagar, Bengaluru',
-        phone: '9845012345',
-        publicUrl: 'https://gymrex-os.vercel.app',
-        gstin: '29AABCI1234F1Z8'
-      },
-      billingSettings: {
-        receiptType: 'GST tax invoice',
-        gstin: rawProfiles[0]?.gstin || '29AABCI1234F1Z8',
-        taxPercent: 18,
-        maxStaffDiscount: 20
-      },
+      gymProfile,
+      billingSettings,
       members,
       leads: rawLeads,
       trainers,
@@ -113,12 +132,7 @@ export async function GET() {
       auditLog,
       ptAssignments: rawPT,
       attendance: rawAttendance,
-      plans: [
-        { id: 'P1', name: 'Monthly', days: 30, sessions: 'Standard Gym Access', price: 1500 },
-        { id: 'P2', name: 'Quarterly', days: 90, sessions: 'Standard Gym Access', price: 4000 },
-        { id: 'P3', name: 'Half-yearly', days: 180, sessions: 'Standard Gym Access', price: 7000 },
-        { id: 'P4', name: 'Annual', days: 365, sessions: 'Standard Gym Access', price: 12000 }
-      ]
+      plans
     }, {
       headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
     });
