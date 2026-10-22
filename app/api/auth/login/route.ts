@@ -17,49 +17,54 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Email and password required' }, { status: 400 });
     }
 
-    const user = await prisma.user.findFirst({
-      where: { email: { equals: cleanEmail, mode: 'insensitive' } }
-    });
+    // 1. Check Demo Accounts
+    const defaultAccounts: Record<string, { name: string; role: string; pass: string }> = {
+      'owner@gym.com': { name: 'Gym Owner', role: 'Owner', pass: 'password123' },
+      'manager@gym.com': { name: 'Priya Nair', role: 'Manager', pass: 'password123' },
+      'desk@gym.com': { name: 'Rahul Gowda', role: 'Front desk', pass: 'password123' },
+      'ca@gym.com': { name: 'CA Suresh Bhat', role: 'Accountant', pass: 'password123' }
+    };
 
-    if (user) {
-      if (user.password !== cleanPass) {
+    if (defaultAccounts[cleanEmail]) {
+      const match = defaultAccounts[cleanEmail];
+      if (cleanPass !== match.pass) {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: {
-          id: user.id,
-          name: user.name || 'User',
-          email: user.email,
-          role: user.role === 'OWNER' ? 'Owner' : user.role === 'TRAINER' ? 'Trainer' : 'Staff'
-        }
+        user: { id: `acc_${cleanEmail.split('@')[0]}`, name: match.name, email: cleanEmail, role: match.role }
       });
     }
 
-    if (cleanEmail === 'owner@gym.com') {
-      if (cleanPass !== 'password123') {
+    // 2. Check Trainer Table (FIXES: Trainer login from website)
+    const trainers: any[] = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "Trainer" WHERE LOWER("email") = $1 LIMIT 1`, cleanEmail
+    ).catch(() => []);
+
+    if (trainers.length > 0) {
+      const tr = trainers[0];
+      if (tr.password !== cleanPass) {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: { id: 'owner_1', name: 'Gym Owner', email: 'owner@gym.com', role: 'Owner' }
+        user: { id: tr.id, name: tr.name, email: tr.email, role: 'Trainer' }
       });
     }
 
-    const trainers = await prisma.trainer.findMany().catch(() => []);
-    const match = trainers.find((t: any) => {
-      const te = ((t as any).email || `${t.phone}@gym.com`).toLowerCase().trim();
-      return te === cleanEmail || t.phone === cleanEmail;
-    });
+    // 3. Check User Table
+    const users: any[] = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "User" WHERE LOWER("email") = $1 LIMIT 1`, cleanEmail
+    ).catch(() => []);
 
-    if (match) {
-      const expected = (match as any).password || 'password123';
-      if (cleanPass !== expected) {
+    if (users.length > 0) {
+      const u = users[0];
+      if (u.password !== cleanPass) {
         return NextResponse.json({ success: false, message: 'Invalid password. Access denied.' }, { status: 401 });
       }
       return NextResponse.json({
         success: true,
-        user: { id: match.id, name: match.name, email: cleanEmail, role: 'Trainer' }
+        user: { id: u.id, name: u.name, email: u.email, role: u.role === 'OWNER' ? 'Owner' : u.role }
       });
     }
 
