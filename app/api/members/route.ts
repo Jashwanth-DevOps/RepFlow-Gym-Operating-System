@@ -19,10 +19,11 @@ export async function POST(req: Request) {
     const countRes: any[] = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int as total FROM "Member"`).catch(() => [{ total: 0 }]);
     const nextNum = (countRes[0]?.total || 0) + 1;
     const memberCode = `IT${1000 + nextNum}`;
-    const id = `mem_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const id = `mem_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const todayStr = new Date().toISOString().split('T')[0];
+    const receiptNo = `RCPT-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 1. Save member with complete invoice breakdown
+    // 1. Insert Member with accurate invoice details & balance due
     await prisma.$executeRawUnsafe(
       `INSERT INTO "Member" (
         "id", "name", "phone", "gender", "plan", "planPrice", "startDate", "expires", 
@@ -39,9 +40,8 @@ export async function POST(req: Request) {
       Number(taxAmount || 0), Number(grandTotal || 0), Number(paidAmount || 0), paymentMethod || 'UPI'
     );
 
-    // 2. CRITICAL: Automatically log the payment record so "Collected Today" reflects immediately!
+    // 2. Insert SINGLE payment entry (no duplicates)
     if (Number(paidAmount) > 0) {
-      const receiptNo = `RCPT-${Math.floor(1000 + Math.random() * 9000)}`;
       await prisma.$executeRawUnsafe(
         `INSERT INTO "Payment" ("id", "receipt", "member", "phone", "amount", "method", "plan", "note", "date", "operator", "createdAt", "updatedAt")
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       member: {
         id, code: memberCode, name, phone, plan, planPrice, dues: Number(dues),
         admissionFee, ptTrainer, ptSessions, ptPrice, grandTotal, paidAmount, paymentMethod,
-        startDate, expires
+        startDate, expires, receipt: receiptNo
       }
     });
   } catch (err: any) {
