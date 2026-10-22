@@ -179,6 +179,7 @@ export default function RepFlowApp() {
   };
 
   const [newMemberForm, setNewMemberForm] = useState(getInitialMemberForm());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const openFreshNewMemberModal = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -548,6 +549,7 @@ export default function RepFlowApp() {
 
   const handleCreateMember = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!canPerform('Add & edit members')) {
       alert('Your role does not have permission to add members.');
       return;
@@ -587,6 +589,7 @@ export default function RepFlowApp() {
       paymentMethod: newMemberForm.paymentMethod
     };
 
+    setIsSubmitting(true);
     try {
       const res = await fetch('/api/members', {
         method: 'POST',
@@ -617,23 +620,6 @@ export default function RepFlowApp() {
         });
       }
 
-      if (payNowCalculated > 0) {
-        await fetch('/api/payments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            member: created.name,
-            phone: created.phone,
-            amount: payNowCalculated,
-            method: newMemberForm.paymentMethod,
-            plan: `${created.plan} Membership`,
-            date: todayStr,
-            operator: activeUser?.name || 'Owner'
-          })
-        });
-        await fetchData();
-      }
-
       setCreatedMemberCard({
         ...created,
         basePlanAmount: basePlanPrice,
@@ -655,6 +641,8 @@ export default function RepFlowApp() {
       fetchData();
     } catch (err) {
       alert('Error creating member.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -3530,7 +3518,7 @@ export default function RepFlowApp() {
               <div className="flex justify-between font-bold text-[#84cc16]"><span>Pay Now ({newMemberForm.paymentMethod}):</span><span>₹{payNowCalculated}</span></div>
             </div>
 
-            <button type="submit" className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl">Register & Generate Invoice</button>
+            <button type="submit" disabled={isSubmitting} className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl disabled:opacity-60 disabled:cursor-not-allowed">{isSubmitting ? 'Registering...' : 'Register & Generate Invoice'}</button>
           </form>
         </div>
       )}
