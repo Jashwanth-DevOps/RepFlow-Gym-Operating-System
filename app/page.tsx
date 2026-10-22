@@ -104,6 +104,14 @@ export default function RepFlowApp() {
   const [showEditTrainerPasswordEye, setShowEditTrainerPasswordEye] = useState(false);
   const [showAddPlanModal, setShowAddPlanModal] = useState(false);
   const [showAddPTModal, setShowAddPTModal] = useState(false);
+  const [isAssigningPT, setIsAssigningPT] = useState(false);
+  const [ptSessionsInput, setPtSessionsInput] = useState(12);
+  const [ptStartDateInput, setPtStartDateInput] = useState(todayStr);
+  const [ptEndDateInput, setPtEndDateInput] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 36);
+    return d.toISOString().split('T')[0];
+  });
   const [showEditPTModal, setShowEditPTModal] = useState<any>(null);
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [receiptSuccess, setReceiptSuccess] = useState<any>(null);
@@ -610,7 +618,7 @@ export default function RepFlowApp() {
       }
 
       if (payNowCalculated > 0) {
-        const pRes = await fetch('/api/payments', {
+        await fetch('/api/payments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -618,7 +626,7 @@ export default function RepFlowApp() {
             phone: created.phone,
             amount: payNowCalculated,
             method: newMemberForm.paymentMethod,
-            plan: `${created.plan}${admissionPrice > 0 ? ' + Adm' : ''}${ptPriceCalc > 0 ? ' + PT' : ''}`,
+            plan: `${created.plan} Membership`,
             date: todayStr,
             operator: activeUser?.name || 'Owner'
           })
@@ -842,31 +850,42 @@ export default function RepFlowApp() {
       alert('Your role does not have permission to manage PT sessions.');
       return;
     }
-    const ptPrice = Number(e.target.ptPrice.value || 0);
+    if (isAssigningPT) return;
+    setIsAssigningPT(true);
+
     const memberName = e.target.ptMember.value;
     const trainerName = e.target.ptTrainer.value;
-    const sessions = Number(e.target.ptSessions.value || 12);
+    const sessions = Number(ptSessionsInput || 12);
+    const ptPrice = Number(e.target.ptPrice.value || 6000);
     const payMethod = e.target.ptMethod.value;
-    const startDate = e.target.ptStart.value;
-    const endDate = e.target.ptEnd.value;
-
-    const payload = {
-      trainer: trainerName,
-      member: memberName,
-      sessions,
-      price: ptPrice,
-      method: payMethod,
-      startDate,
-      endDate,
-      operator: activeUser?.name || 'Owner'
-    };
+    const startDate = ptStartDateInput;
+    const endDate = ptEndDateInput;
 
     try {
-      await fetch('/api/pt-assign', {
+      const res = await fetch('/api/pt-assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          trainer: trainerName,
+          member: memberName,
+          sessions,
+          price: ptPrice,
+          method: payMethod,
+          startDate,
+          endDate,
+          operator: activeUser?.name || 'Owner'
+        })
       });
+
+      if (!res.ok) {
+        let message = 'Error assigning PT';
+        try {
+          const errorData = await res.json();
+          message = errorData.message || message;
+        } catch {}
+        alert(message);
+        return;
+      }
 
       let stampedReceipt = `RCPT-${Math.floor(1000 + Math.random() * 9000)}`;
       if (ptPrice > 0) {
@@ -888,8 +907,7 @@ export default function RepFlowApp() {
       }
 
       setShowAddPTModal(false);
-      fetchData();
-
+      await fetchData();
       setAssignedPTSuccessCard({
         receipt: stampedReceipt,
         member: memberName,
@@ -900,8 +918,11 @@ export default function RepFlowApp() {
         startDate,
         endDate
       });
+      alert('PT assigned successfully!');
     } catch (err) {
-      console.error(err);
+      alert('Error assigning PT');
+    } finally {
+      setIsAssigningPT(false);
     }
   };
 
@@ -962,8 +983,11 @@ export default function RepFlowApp() {
   const handleRecordPayment = async (e: any) => {
     if (e && e.preventDefault) e.preventDefault();
 
-    if (!payForm.member || !payForm.amount) {
-      alert('Please enter member name and amount.');
+    const recMember = payForm.member || '';
+    const recAmount = Number(payForm.amount || 0);
+
+    if (!recMember || recAmount <= 0) {
+      alert('Please enter member name and a valid amount.');
       return;
     }
 
@@ -972,21 +996,23 @@ export default function RepFlowApp() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          member: payForm.member,
+          member: recMember,
           phone: payForm.phone || '',
-          amount: Number(payForm.amount),
+          amount: recAmount,
           method: payForm.method || 'Cash',
           plan: payForm.category || 'Membership',
-          note: payForm.note || 'Recorded payment',
+          note: payForm.note || 'Manual Collection',
           date: todayStr,
           operator: activeUser?.name || 'Owner'
         })
       });
       const d = await res.json();
-      if (d.payment) {
+      if (res.ok && d.success) {
         setReceiptSuccess(d.payment);
         setShowPaymentModal(false);
         await fetchData();
+      } else {
+        alert(d.message || 'Failed to record payment');
       }
     } catch (err) {
       alert('Failed to record payment');
@@ -2108,9 +2134,27 @@ export default function RepFlowApp() {
                             <div className="flex items-center gap-1.5">
                               <h4 className={`font-bold text-sm ${textColor}`}>{trainer.name}</h4>
                               {activeUser?.role === 'Owner' && (
+                                <>
                                 <button onClick={(e) => { e.stopPropagation(); setShowEditTrainerModal(trainer); }} className="p-1 text-neutral-400 hover:text-[#84cc16]">
                                   <Edit3 className="w-3.5 h-3.5" />
                                 </button>
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!confirm(`Are you sure you want to delete trainer ${trainer.name}?`)) return;
+                                    const res = await fetch(`/api/trainers/${trainer.id}`, { method: 'DELETE' });
+                                    if (!res.ok) {
+                                      alert('Failed to delete trainer.');
+                                      return;
+                                    }
+                                    await fetchData();
+                                  }}
+                                  className="p-1 text-neutral-400 hover:text-rose-500 rounded"
+                                  title="Delete Trainer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 inline" />
+                                </button>
+                                </>
                               )}
                             </div>
                             <p className={`text-[10px] ${subTextColor}`}>{trainer.specialty}</p>
@@ -3727,7 +3771,19 @@ export default function RepFlowApp() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-neutral-400">Sessions</label>
-                <input name="ptSessions" type="number" defaultValue="12" className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold ${innerBg} ${textColor}`} />
+                <input
+                  name="ptSessions"
+                  type="number"
+                  value={ptSessionsInput}
+                  onChange={(e) => {
+                    const sessions = Number(e.target.value);
+                    setPtSessionsInput(sessions);
+                    const d = new Date(ptStartDateInput || new Date());
+                    d.setDate(d.getDate() + Math.max(14, sessions * 3));
+                    setPtEndDateInput(d.toISOString().split('T')[0]);
+                  }}
+                  className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold ${innerBg} ${textColor}`}
+                />
               </div>
               <div>
                 <label className="text-neutral-400">Total Fee (₹)</label>
@@ -3746,14 +3802,32 @@ export default function RepFlowApp() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-neutral-400">Start Date</label>
-                <input name="ptStart" type="date" defaultValue={todayStr} className={`w-full mt-1 px-2 py-2 border rounded-lg ${innerBg} ${textColor}`} />
+                <input
+                  name="ptStart"
+                  type="date"
+                  value={ptStartDateInput}
+                  onChange={(e) => {
+                    const start = e.target.value;
+                    setPtStartDateInput(start);
+                    const d = new Date(start || new Date());
+                    d.setDate(d.getDate() + Math.max(14, Number(ptSessionsInput || 12) * 3));
+                    setPtEndDateInput(d.toISOString().split('T')[0]);
+                  }}
+                  className={`w-full mt-1 px-2 py-2 border rounded-lg ${innerBg} ${textColor}`}
+                />
               </div>
               <div>
                 <label className="text-neutral-400">End Date</label>
-                <input name="ptEnd" type="date" defaultValue="2026-11-01" className={`w-full mt-1 px-2 py-2 border rounded-lg ${innerBg} ${textColor}`} />
+                <input
+                  name="ptEnd"
+                  type="date"
+                  value={ptEndDateInput}
+                  onChange={(e) => setPtEndDateInput(e.target.value)}
+                  className={`w-full mt-1 px-2 py-2 border rounded-lg ${innerBg} ${textColor}`}
+                />
               </div>
             </div>
-            <button type="submit" className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl">Confirm PT Assignment & Record Fee</button>
+            <button type="submit" disabled={isAssigningPT} className="w-full py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl disabled:opacity-60 disabled:cursor-not-allowed">{isAssigningPT ? 'Assigning PT...' : 'Confirm PT Assignment & Record Fee'}</button>
           </form>
         </div>
       )}
