@@ -561,11 +561,22 @@ export default function RepFlowApp() {
       phone: cleanedPhone,
       gender: newMemberForm.gender,
       plan: newMemberForm.plan,
+      planPrice: basePlanPrice,
       startDate: newMemberForm.startDate,
       expires: newMemberForm.endDate,
       status: 'Active',
       dues: Number(newMemberForm.dues || 0),
-      operator: activeUser?.name || 'Owner'
+      admissionFee: admissionPrice,
+      ptTrainer: newMemberForm.assignPT ? newMemberForm.ptTrainer : '',
+      ptSessions: newMemberForm.assignPT ? Number(newMemberForm.ptSessions || 0) : 0,
+      ptPrice: ptPriceCalc,
+      discountPercent: Number(newMemberForm.discountPercent || 0),
+      discountAmount,
+      taxPercent: newMemberForm.applyTax ? defaultTaxRate : 0,
+      taxAmount: calculatedTax,
+      grandTotal,
+      paidAmount: payNowCalculated,
+      paymentMethod: newMemberForm.paymentMethod
     };
 
     try {
@@ -949,34 +960,36 @@ export default function RepFlowApp() {
   };
 
   const handleRecordPayment = async (e: any) => {
-    e.preventDefault();
-    if (!canPerform('Collect payments')) {
-      alert('Your role does not have permission to collect payments.');
+    if (e && e.preventDefault) e.preventDefault();
+
+    if (!payForm.member || !payForm.amount) {
+      alert('Please enter member name and amount.');
       return;
     }
-    const payload = {
-      member: payForm.member || 'Walk-in Member',
-      phone: payForm.phone || '9876543210',
-      amount: Number(payForm.amount || 0),
-      method: payForm.method,
-      plan: payForm.category,
-      note: payForm.note,
-      date: todayStr,
-      operator: activeUser?.name || 'Owner'
-    };
 
     try {
       const res = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          member: payForm.member,
+          phone: payForm.phone || '',
+          amount: Number(payForm.amount),
+          method: payForm.method || 'Cash',
+          plan: payForm.category || 'Membership',
+          note: payForm.note || 'Recorded payment',
+          date: todayStr,
+          operator: activeUser?.name || 'Owner'
+        })
       });
       const d = await res.json();
-      setReceiptSuccess(d.payment);
-      setShowPaymentModal(false);
-      fetchData();
+      if (d.payment) {
+        setReceiptSuccess(d.payment);
+        setShowPaymentModal(false);
+        await fetchData();
+      }
     } catch (err) {
-      console.error(err);
+      alert('Failed to record payment');
     }
   };
 
