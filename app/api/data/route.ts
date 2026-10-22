@@ -32,11 +32,11 @@ export async function GET() {
       code: m.code || `IT${1001 + idx}`
     }));
 
-    // Preserves the customized email and password entered by the owner
+    // Keep actual owner-created email and password
     const trainers = rawTrainers.map((t: any) => ({
       id: t.id,
       name: t.name || 'Trainer',
-      email: t.email || `${t.phone}@gym.com`,
+      email: t.email || '',
       phone: t.phone || '',
       password: t.password || 'password123',
       specialty: t.specialty || 'Strength & HIIT',
@@ -53,16 +53,18 @@ export async function GET() {
       method: p.method || 'UPI',
       plan: p.plan || 'Membership',
       note: p.note || '',
-      date: p.date || new Date().toISOString().split('T')[0]
+      date: p.date ? String(p.date).split('T')[0] : new Date().toISOString().split('T')[0]
     }));
 
+    // Map expense fields so PDF displays paidTo and method without 'undefined'
     const expenses = rawExpenses.map((e: any) => ({
       id: e.id,
       category: e.category || 'General',
       paidTo: e.paidTo || e.title || 'Vendor',
+      title: e.paidTo || e.title || 'Vendor',
       amount: Number(e.amount || 0),
       method: e.method || 'UPI',
-      date: e.date || new Date().toISOString().split('T')[0]
+      date: e.date ? String(e.date).split('T')[0] : new Date().toISOString().split('T')[0]
     }));
 
     const staff = [
@@ -83,7 +85,8 @@ export async function GET() {
 
     const auditLog = [
       { action: 'Owner logged in successfully', user: 'Gym Owner', time: '10:00 AM' },
-      { action: 'Database schema verified on Supabase Mumbai', user: 'System', time: '09:00 AM' }
+      { action: 'Database schema verified on Supabase Mumbai', user: 'System', time: '09:00 AM' },
+      { action: 'Daily automated backup completed', user: 'System', time: '06:00 AM' }
     ];
 
     return NextResponse.json({
@@ -91,11 +94,12 @@ export async function GET() {
         name: 'GymRex Fitness',
         branch: 'Indiranagar, Bengaluru',
         phone: '9845012345',
-        publicUrl: 'https://gymrex-os.vercel.app'
+        publicUrl: 'https://gymrex-os.vercel.app',
+        gstin: '29AABCI1234F1Z8'
       },
       billingSettings: {
         receiptType: 'GST tax invoice',
-        gstin: '29AABCI1234F1Z8',
+        gstin: rawProfiles[0]?.gstin || '29AABCI1234F1Z8',
         taxPercent: 18,
         maxStaffDiscount: 20
       },
