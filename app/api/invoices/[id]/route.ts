@@ -9,48 +9,66 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    const id = params.id;
+    let rawId = decodeURIComponent(params.id || '').trim();
+    // Clean potential prefixes
+    const cleanId = rawId.replace(/^INV-/, '');
 
-    const members: any[] = await prisma.$queryRawUnsafe(
-      `SELECT * FROM "Member" WHERE "id" = $1 OR "code" = $1 LIMIT 1`, id
-    ).catch(() => []);
-
-    const payments: any[] = await prisma.$queryRawUnsafe(
-      `SELECT * FROM "Payment" WHERE "receipt" = $1 OR "id" = $1 LIMIT 1`, id
-    ).catch(() => []);
-
+    // 1. Fetch Gym Profile & Billing Settings from DB
     const gymProfiles: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "GymProfile" LIMIT 1`).catch(() => []);
+    const billingSettings: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "BillingSettings" LIMIT 1`).catch(() => []);
+
+    const gym = gymProfiles[0] || { name: 'GymRex Fitness', branch: 'Indiranagar, Bengaluru', phone: '9845012345' };
+    const billing = billingSettings[0] || { gstin: '29AABCI1234F1Z8', taxPercent: 18 };
+
+    // 2. Look up Payment record
+    const payments: any[] = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "Payment" WHERE "receipt" = $1 OR "id" = $1 OR "receipt" = $2 LIMIT 1`,
+      cleanId, rawId
+    ).catch(() => []);
+
+    // 3. Look up PT assignment record
+    const ptRecords: any[] = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "pt_assignments" WHERE "id" = $1 OR "id" = $2 LIMIT 1`,
+      cleanId, rawId
+    ).catch(() => []);
+
+    // 4. Look up Member
+    let memberMatchName = payments[0]?.member || '';
+    const members: any[] = await prisma.$queryRawUnsafe(
+      `SELECT * FROM "Member" WHERE "id" = $1 OR "code" = $1 OR "name" = $2 LIMIT 1`,
+      cleanId, memberMatchName
+    ).catch(() => []);
+
     const member = members[0] || {};
     const payment = payments[0] || {};
-    const gym = gymProfiles[0] || { name: 'Iron Temple Fitness', branch: 'Indiranagar, Bengaluru', gstin: '29AABCI1234F1Z8', phone: '9845012345' };
+    const pt = ptRecords[0] || {};
 
-    const name = member.name || payment.member || 'Member';
-    const phone = member.phone || payment.phone || '9876543210';
-    const memberCode = member.code || member.id || 'IT1001';
-    const date = payment.date || member.startDate || new Date().toISOString().split('T')[0];
-    const receiptNo = payment.receipt || `RCPT-${id.substring(0, 6).toUpperCase()}`;
+    const clientName = payment.member || member.name || pt.member || 'Member';
+    const clientPhone = member.phone || payment.phone || '9876543210';
+    const clientCode = member.code || member.id || 'IT1001';
+    const receiptNo = payment.receipt || (rawId.startsWith('RCPT-') ? rawId : `RCPT-${Math.floor(1000 + Math.random() * 9000)}`);
+    const invoiceDate = payment.date || member.startDate || new Date().toISOString().split('T')[0];
 
-    const planName = member.plan || payment.plan || 'Quarterly';
-    const planPrice = Number(member.planPrice || 4000);
-    const discountPercent = Number(member.discountPercent || 0);
-    const discountAmount = Number(member.discountAmount || 0);
-    const admissionFee = Number(member.admissionFee || 0);
-    const ptTrainer = member.ptTrainer || '';
-    const ptSessions = Number(member.ptSessions || 0);
-    const ptPrice = Number(member.ptPrice || 0);
+    // Determine invoice line items
+    let description = payment.plan || member.plan || 'Gym Service';
+    let lineAmount = Number(payment.amount || member.paidAmount || member.planPrice || 4000);
+    let isPTInvoice = Boolean(pt.trainer || payment.plan?.includes('PT') || member.ptTrainer);
+    let trainerName = pt.trainer || member.ptTrainer || 'Personal Trainer';
+    let ptSessions = pt.sessions || member.ptSessions || 12;
 
-    const membershipSubtotal = planPrice - discountAmount;
-    const admissionSubtotal = admissionFee;
-    const ptSubtotal = ptPrice;
+    if (isPTInvoice && pt.price) {
+      lineAmount = Number(pt.price);
+      description = `PT Package (Trainer: ${trainerName}) - ${ptSessions} sessions`;
+    }
 
-    const taxPercent = Number(member.taxPercent || 18);
-    const taxAmount = Number(member.taxAmount || Math.round(((membershipSubtotal + admissionSubtotal + ptSubtotal) * taxPercent) / 100));
-    const grandTotal = Number(member.grandTotal || (membershipSubtotal + admissionSubtotal + ptSubtotal + taxAmount));
-    const dues = Number(member.dues || 0);
-    const amountReceived = Number(member.paidAmount || (grandTotal - dues));
-    const statusText = dues > 0 ? 'PART-PAID' : 'PAID';
-    const statusColor = dues > 0 ? '#f59e0b' : '#22c55e';
-    const payMethod = member.paymentMethod || payment.method || 'UPI';
+    // 5. Fetch full payment history for this member
+    const historyPayments: any[] = clientName ? await prisma.$queryRawUnsafe(
+      `SELECT * FROM "Payment" WHERE LOWER("member") = LOWER($1) ORDER BY "createdAt" DESC LIMIT 5`,
+      clientName
+    ).catch(() => []) : [];
+
+    const totalPaidSoFar = historyPayments.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0) || lineAmount;
+    const currentDues = Number(member.dues || 0);
 
     const html = `
       <!DOCTYPE html>
@@ -61,7 +79,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 40px; color: #111; max-width: 800px; margin: auto; font-size: 13px; line-height: 1.5; }
           .center { text-align: center; }
-          .gym-title { font-size: 26px; font-weight: 900; margin-bottom: 2px; }
+          .gym-title { font-size: 26px; font-weight: 900; margin-bottom: 2px; color: #111; }
           .gym-meta { font-size: 11px; color: #555; margin-bottom: 15px; }
           .doc-type { font-weight: 900; font-size: 14px; letter-spacing: 1px; border-bottom: 3px solid #84cc16; padding-bottom: 6px; margin-bottom: 25px; text-align: center; }
           .two-col { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 12px; }
@@ -72,89 +90,99 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           .calc-table { width: 380px; margin-left: auto; margin-top: 20px; border-collapse: collapse; font-size: 12px; }
           .calc-table td { padding: 6px 4px; }
           .grand-total { border-top: 2px solid #111; border-bottom: 2px solid #111; font-weight: 900; font-size: 15px; }
-          .sig-box { width: 180px; border: 1px dashed #999; padding: 25px 10px 10px 10px; text-align: center; font-size: 10px; color: #777; margin-left: auto; margin-top: 40px; }
-          .footer { margin-top: 30px; font-size: 11px; color: #666; }
+          .sig-box { width: 180px; border: 1px dashed #999; padding: 25px 10px 10px 10px; text-align: center; font-size: 10px; color: #777; margin-left: auto; margin-top: 30px; }
+          .history-box { margin-top: 30px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #fdfdfd; font-size: 11px; }
+          .history-title { font-weight: bold; margin-bottom: 6px; text-transform: uppercase; color: #444; }
+          .footer { margin-top: 25px; font-size: 11px; color: #666; text-align: center; }
         </style>
       </head>
       <body>
         <div class="center">
-          <div class="gym-title">${gym.name || 'Iron Temple Fitness'}</div>
-          <div class="gym-meta">Branch: ${gym.branch || 'Indiranagar, Bengaluru'} | GSTIN: ${gym.gstin || '29AABCI1234F1Z8'} | Phone: ${gym.phone || '9845012345'}</div>
-          <div class="doc-type">TAX INVOICE / RECEIPT</div>
+          <div class="gym-title">${gym.name || 'GymRex Fitness'}</div>
+          <div class="gym-meta">Branch: ${gym.branch || 'Indiranagar, Bengaluru'} | GSTIN: ${billing.gstin || '29AABCI1234F1Z8'} | Phone: ${gym.phone || '9845012345'}</div>
+          <div class="doc-type">OFFICIAL TAX INVOICE / RECEIPT</div>
         </div>
 
         <div class="two-col">
           <div>
             <strong>BILLED TO</strong><br>
-            <strong>${name}</strong><br>
-            Phone: +91 ${phone}<br>
-            Member ID: ${memberCode}
+            <strong>${clientName}</strong><br>
+            Phone: +91 ${clientPhone}<br>
+            Member ID: ${clientCode}
           </div>
           <div style="text-align: right;">
             <strong>INVOICE DETAILS</strong><br>
-            Invoice No: <strong>${receiptNo}</strong><br>
-            Date: <strong>${date}</strong><br>
-            Status: <strong style="color: ${statusColor};">${statusText}</strong>
+            Invoice / Receipt No: <strong>${receiptNo}</strong><br>
+            Date: <strong>${invoiceDate}</strong><br>
+            Payment Method: <strong>${payment.method || member.paymentMethod || 'UPI'}</strong><br>
+            Status: <strong style="color: ${currentDues > 0 ? '#f59e0b' : '#22c55e'};">${currentDues > 0 ? 'PART-PAID' : 'COMPLETED'}</strong>
           </div>
         </div>
 
         <table class="table">
           <thead>
             <tr>
-              <th style="width: 5%;">#</th>
-              <th style="width: 50%;">DESCRIPTION</th>
-              <th style="width: 30%;">PERIOD / QTY</th>
+              <th style="width: 8%;">#</th>
+              <th style="width: 52%;">DESCRIPTION</th>
+              <th style="width: 25%;">PERIOD / TYPE</th>
               <th style="width: 15%; text-align: right;">AMOUNT (₹)</th>
             </tr>
           </thead>
           <tbody>
-            <tr class="section-row"><td colspan="4">1. MEMBERSHIP</td></tr>
+            <tr class="section-row"><td colspan="4">1. TRANSACTION DETAILS</td></tr>
             <tr>
               <td>1.1</td>
-              <td>Membership Plan: ${planName}</td>
-              <td>${member.startDate || date} to ${member.expires || '2027-01-01'}</td>
-              <td style="text-align: right;">₹${planPrice}</td>
+              <td>${description}</td>
+              <td>${payment.method || 'Standard'}</td>
+              <td style="text-align: right;">₹${lineAmount}</td>
             </tr>
-            ${discountAmount > 0 ? `
+            ${isPTInvoice ? `
             <tr>
               <td>1.2</td>
-              <td>Applicable Discount (${discountPercent}%)</td>
-              <td>Applied</td>
-              <td style="text-align: right; color: red;">- ₹${discountAmount}</td>
-            </tr>` : ''}
-
-            ${admissionFee > 0 ? `
-            <tr class="section-row"><td colspan="4">2. ADMISSION / JOINING FEE</td></tr>
-            <tr>
-              <td>2.1</td>
-              <td>One-time admission / registration fee</td>
-              <td>One-time</td>
-              <td style="text-align: right;">₹${admissionFee}</td>
-            </tr>` : ''}
-
-            ${ptPrice > 0 ? `
-            <tr class="section-row"><td colspan="4">3. PERSONAL TRAINING (PT)</td></tr>
-            <tr>
-              <td>3.1</td>
-              <td>PT Package (Trainer: ${ptTrainer})</td>
-              <td>${ptSessions} sessions</td>
-              <td style="text-align: right;">₹${ptPrice}</td>
+              <td>Assigned Coach: ${trainerName}</td>
+              <td>${ptSessions} Sessions Total</td>
+              <td style="text-align: right;">Included</td>
             </tr>` : ''}
           </tbody>
         </table>
 
         <table class="calc-table">
-          <tr><td>Membership Subtotal:</td><td style="text-align: right;">₹${membershipSubtotal}</td></tr>
-          ${admissionSubtotal > 0 ? `<tr><td>Admission Subtotal:</td><td style="text-align: right;">₹${admissionSubtotal}</td></tr>` : ''}
-          ${ptSubtotal > 0 ? `<tr><td>PT Subtotal:</td><td style="text-align: right;">₹${ptSubtotal}</td></tr>` : ''}
-          ${taxAmount > 0 ? `<tr><td>Tax / GST (${taxPercent}%):</td><td style="text-align: right;">₹${taxAmount}</td></tr>` : ''}
-          <tr class="grand-total"><td>GRAND TOTAL:</td><td style="text-align: right;">₹${grandTotal}</td></tr>
-          <tr><td style="color: green; font-weight: bold;">Amount Received (${payMethod}):</td><td style="text-align: right; color: green; font-weight: bold;">₹${amountReceived}</td></tr>
-          <tr><td style="color: red; font-weight: bold;">BALANCE DUE:</td><td style="text-align: right; color: red; font-weight: bold;">₹${dues}</td></tr>
+          <tr><td>Receipt Amount:</td><td style="text-align: right;">₹${lineAmount}</td></tr>
+          <tr class="grand-total"><td>AMOUNT RECEIVED:</td><td style="text-align: right; color: green;">₹${lineAmount}</td></tr>
+          <tr><td>Total Paid by Member to Date:</td><td style="text-align: right; font-weight: bold;">₹${totalPaidSoFar}</td></tr>
+          <tr><td style="color: red;">Remaining Member Dues:</td><td style="text-align: right; color: red; font-weight: bold;">₹${currentDues}</td></tr>
         </table>
 
-        <div class="sig-box">Authorized Signature & Stamp</div>
-        <div class="footer">Thank you for training with us! Please retain this receipt for your records.<br>Authorized by: ${gym.name} Admin</div>
+        ${historyPayments.length > 0 ? `
+        <div class="history-box">
+          <div class="history-title">Member Payment History (${clientName})</div>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid #ddd; text-align:left; color:#666;">
+                <th>Receipt</th><th>Date</th><th>Plan/Type</th><th>Method</th><th style="text-align:right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${historyPayments.map((hp: any) => `
+                <tr style="border-bottom:1px solid #eee;">
+                  <td>${hp.receipt}</td>
+                  <td>${hp.date}</td>
+                  <td>${hp.plan}</td>
+                  <td>${hp.method}</td>
+                  <td style="text-align:right; font-weight:bold;">₹${hp.amount}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+
+        <div class="sig-box">
+          Authorized Signature & Stamp
+        </div>
+
+        <div class="footer">
+          Thank you for choosing ${gym.name || 'GymRex Fitness'}! This is a digitally generated legal receipt.
+        </div>
         <script>window.onload = function() { window.print(); }</script>
       </body>
       </html>
