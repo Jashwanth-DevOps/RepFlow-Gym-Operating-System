@@ -7,53 +7,36 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const name = body.name || 'Trainer';
-    const phone = body.phone || '9999999999';
-    const email = (body.email || `${phone}@gym.com`).trim().toLowerCase();
-    const password = (body.password || 'password123').trim();
-    const specialty = body.specialty || 'Strength & HIIT';
+    const { name, email, password, phone, specialty } = await req.json();
+    const id = `tr_${Date.now()}`;
 
-    const trainer = await prisma.trainer.create({
-      data: { name, phone, specialty, active: true }
-    });
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO "Trainer" ("id", "name", "email", "password", "phone", "specialty", "rating", "active", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, '5.0', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      id, name, email, password || 'password123', phone, specialty || 'Strength & HIIT'
+    );
 
-    await prisma.user.upsert({
-      where: { email },
-      update: { name, password, role: 'TRAINER' },
-      create: { email, name, password, role: 'TRAINER' }
-    });
-
-    return NextResponse.json({ success: true, trainer: { ...trainer, email, password } });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    return NextResponse.json({ success: true, trainer: { id, name, email, phone, specialty } });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(req: Request) {
   try {
-    const body = await request.json();
-    const { id, name, phone, email, password, specialty } = body;
-    const cleanEmail = (email || `${phone}@gym.com`).trim().toLowerCase();
-    const cleanPass = (password || 'password123').trim();
+    const { id, name, email, password, phone, specialty } = await req.json();
 
-    if (id) {
-      await prisma.trainer.update({
-        where: { id },
-        data: { name, phone, specialty }
-      }).catch(() => null);
-    }
-
-    await prisma.user.upsert({
-      where: { email: cleanEmail },
-      update: { name, password: cleanPass, role: 'TRAINER' },
-      create: { email: cleanEmail, name, password: cleanPass, role: 'TRAINER' }
-    });
+    await prisma.$executeRawUnsafe(
+      `UPDATE "Trainer"
+       SET "name" = $1, "email" = $2, "password" = $3, "phone" = $4, "specialty" = $5, "updatedAt" = CURRENT_TIMESTAMP
+       WHERE "id" = $6`,
+      name, email, password, phone, specialty, id
+    );
 
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
   }
 }
