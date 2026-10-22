@@ -3023,7 +3023,7 @@ export default function RepFlowApp() {
                 <form 
                   onSubmit={async (e: any) => {
                     e.preventDefault();
-                    await fetch('/api/settings/billing', {
+                    const res = await fetch('/api/settings/billing', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -3033,8 +3033,17 @@ export default function RepFlowApp() {
                         maxStaffDiscount: Number(e.target.maxDiscount.value || 20)
                       })
                     });
-                    alert('Billing & Tax settings updated!');
-                    fetchData();
+                    if (res.ok) {
+                      alert('Billing & Tax settings updated successfully!');
+                      await fetchData();
+                    } else {
+                      let message = 'Unable to update billing and tax settings.';
+                      try {
+                        const data = await res.json();
+                        message = data.message || message;
+                      } catch {}
+                      alert(message);
+                    }
                   }} 
                   className={`p-4 sm:p-5 rounded-2xl border max-w-lg space-y-3.5 text-xs ${cardBg}`}
                 >
@@ -3351,11 +3360,28 @@ export default function RepFlowApp() {
               <div>
                 <label className="text-neutral-400">Plan</label>
                 <select value={newMemberForm.plan} onChange={(e) => {
-                  const price = e.target.value === 'Monthly' ? 1500 : e.target.value === 'Quarterly' ? 4000 : e.target.value === 'Half-yearly' ? 7000 : 12000;
-                  const newEnd = calcEndDate(newMemberForm.startDate, e.target.value);
-                  setNewMemberForm({ ...newMemberForm, plan: e.target.value, planPrice: price, endDate: newEnd });
+                  const selectedPlanObj = (dbData?.plans || []).find((p: any) => p.name === e.target.value);
+                  const price = selectedPlanObj ? Number(selectedPlanObj.price) : 4000;
+                  const days = selectedPlanObj ? Number(selectedPlanObj.days) : 90;
+                  const d = new Date(newMemberForm.startDate || new Date());
+                  d.setDate(d.getDate() + days);
+                  setNewMemberForm({
+                    ...newMemberForm,
+                    plan: e.target.value,
+                    planPrice: price,
+                    endDate: d.toISOString().split('T')[0]
+                  });
                 }} className={`w-full mt-1 px-3 py-2 border rounded-lg ${innerBg} ${textColor}`}>
-                  <option>Monthly</option><option>Quarterly</option><option>Half-yearly</option><option>Annual</option>
+                  {(dbData?.plans || [
+                    { name: 'Monthly', days: 30, price: 1500 },
+                    { name: 'Quarterly', days: 90, price: 4000 },
+                    { name: 'Half-yearly', days: 180, price: 7000 },
+                    { name: 'Annual', days: 365, price: 12000 }
+                  ]).map((p: any) => (
+                    <option key={p.id || p.name} value={p.name}>
+                      {p.name} ({p.days || 30} days - ₹{p.price || 1500})
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -3779,7 +3805,8 @@ export default function RepFlowApp() {
                     const sessions = Number(e.target.value);
                     setPtSessionsInput(sessions);
                     const d = new Date(ptStartDateInput || new Date());
-                    d.setDate(d.getDate() + Math.max(14, sessions * 3));
+                    // 1 session = 1 day of validity (or minimum 14 days).
+                    d.setDate(d.getDate() + Math.max(14, sessions));
                     setPtEndDateInput(d.toISOString().split('T')[0]);
                   }}
                   className={`w-full mt-1 px-3 py-2 border rounded-lg font-bold ${innerBg} ${textColor}`}
