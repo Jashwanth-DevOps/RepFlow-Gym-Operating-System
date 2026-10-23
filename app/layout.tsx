@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'RepFlow — Gym Operating System',
-  description: 'Operating system for modern fitness centers',
+  title: 'GymRex Operating System',
+  description: 'High Performance Gym Operating System',
 };
 
 export default function RootLayout({
