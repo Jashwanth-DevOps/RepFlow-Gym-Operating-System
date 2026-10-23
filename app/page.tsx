@@ -32,7 +32,7 @@ function GymRexLogo({ className = "w-8 h-8" }: { className?: string }) {
   );
 }
 
-export default function RepFlowApp() {
+export default function GymRexApp() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<'en' | 'te'>('en');
   const t = translations[lang];
@@ -296,17 +296,13 @@ export default function RepFlowApp() {
   };
 
   const getPublicAppUrl = () => {
-    if (dbData?.gymProfile?.publicUrl && dbData.gymProfile.publicUrl.trim().length > 5) {
+    if (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('rep-flow')) {
+      return window.location.origin;
+    }
+    if (dbData?.gymProfile?.publicUrl && !dbData.gymProfile.publicUrl.includes('rep-flow') && dbData.gymProfile.publicUrl.trim().length > 5) {
       return dbData.gymProfile.publicUrl.replace(/\/+$/, '');
     }
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('repflow_public_url');
-      if (stored && stored.trim().length > 5) return stored.replace(/\/+$/, '');
-      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        return window.location.origin;
-      }
-    }
-    return 'https://rep-flow-gym-operating-system-4o78.vercel.app';
+    return 'https://gymrex-os.vercel.app';
   };
 
   const totalCollectedToday = (dbData?.payments || [])
@@ -1225,7 +1221,7 @@ export default function RepFlowApp() {
           </div>
           <div style="text-align: right;">
             <div>Authorized Operator: <strong>${activeUser?.name || 'Owner'}</strong></div>
-            <div>System: RepFlow Gym OS Enterprise</div>
+            <div>System: GymRex Operating System</div>
           </div>
         </div>
 
@@ -1448,7 +1444,7 @@ export default function RepFlowApp() {
       <div className={`md:hidden flex items-center justify-between p-3 border-b ${theme === 'dark' ? 'bg-[#121418] border-neutral-800' : 'bg-white border-slate-200'}`}>
         <div className="flex items-center space-x-2">
           <button onClick={() => setMobileMenuOpen(true)} className="p-1"><Menu className="w-6 h-6" /></button>
-          <div className="bg-[#84cc16] text-black font-extrabold text-sm px-2 py-0.5 rounded">R</div>
+          <GymRexLogo className="w-7 h-7" />
           <span className="font-bold text-xs truncate max-w-[100px]">{dbData?.gymProfile?.name || 'Iron Temple'}</span>
         </div>
 
@@ -1814,10 +1810,6 @@ export default function RepFlowApp() {
                       <span className="flex items-center gap-2"><CreditCard className="w-3.5 h-3.5 text-neutral-400" /> Members with dues</span>
                       <strong className="text-rose-500">{(dbData?.members || []).filter((m: any) => m.dues > 0).length} →</strong>
                     </div>
-                    <div onClick={() => alert('All auto-debits current.')} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
-                      <span className="flex items-center gap-2"><Zap className="w-3.5 h-3.5 text-neutral-400" /> Failed AutoPay</span>
-                      <strong className="text-rose-500">0 →</strong>
-                    </div>
                     <div onClick={() => navigateTab('leads')} className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer ${innerBg}`}>
                       <span className="flex items-center gap-2"><UserPlus className="w-3.5 h-3.5 text-neutral-400" /> Lead follow-ups due</span>
                       <strong className="text-cyan-400">{(dbData?.leads || []).length} →</strong>
@@ -1849,7 +1841,7 @@ export default function RepFlowApp() {
                 </div>
 
                 <div className={`p-5 rounded-2xl border space-y-3 text-xs ${cardBg}`}>
-                  <h4 className={`font-bold ${textColor}`}>Is Repflow working?</h4>
+                  <h4 className={`font-bold ${textColor}`}>Is GymRex working?</h4>
                   <p className={`text-[10px] ${subTextColor}`}>Live metric benchmarking</p>
                   
                   <div className="space-y-2.5 pt-1">
