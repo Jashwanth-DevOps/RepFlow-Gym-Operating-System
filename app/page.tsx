@@ -486,7 +486,11 @@ export default function GymRexApp() {
       return;
     }
 
-    const match = (dbData?.members || []).find((m: any) => (((m?.code || m?.id || "").toUpperCase())) === cleaned);
+    const match = (dbData?.members || []).find((m: any) =>
+      (m?.code || '').toUpperCase() === cleaned ||
+      (m?.id || '').toUpperCase() === cleaned ||
+      (m?.code || '').toUpperCase().replace(/[^0-9]/g, '') === cleaned.replace(/[^0-9]/g, '')
+    );
 
     if (!match) {
       setCheckInNotice({ type: 'error', message: `No active member found with ID "${cleaned}".` });
