@@ -3053,6 +3053,7 @@ export default function GymRexApp() {
               )}
 
               {settingsSubTab === 'profile' && (
+                <>
                 <form 
                   onSubmit={async (e: any) => {
                     e.preventDefault();
@@ -3103,6 +3104,69 @@ export default function GymRexApp() {
                   </div>
                   <button type="submit" className="px-5 py-2.5 bg-[#84cc16] text-black font-extrabold rounded-xl">Save Profile & Public Link</button>
                 </form>
+
+                <div className={`mt-6 p-4 sm:p-5 rounded-2xl border max-w-lg space-y-4 text-xs ${cardBg}`}>
+                  <div>
+                    <h3 className={`text-sm font-bold ${textColor}`}>Import from GymBook (CSV)</h3>
+                    <p className={`text-[11px] ${subTextColor}`}>Upload your GymBook export CSV to automatically migrate all 170 members and dues.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-neutral-400 font-semibold block">Select GymBook Members CSV</label>
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                          const text = event.target?.result as string;
+                          const lines = text.split('\n').filter(l => l.trim().length > 0);
+                          if (lines.length < 2) {
+                            alert('CSV file appears empty or invalid.');
+                            return;
+                          }
+
+                          const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+                          const records = [];
+
+                          for (let i = 1; i < lines.length; i++) {
+                            const currentLine = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                            const row: any = {};
+                            headers.forEach((h, idx) => {
+                              row[h] = currentLine[idx];
+                            });
+                            records.push(row);
+                          }
+
+                          if (confirm(`Found ${records.length} members in CSV. Start 100% accurate import to GymRex?`)) {
+                            try {
+                              const res = await fetch('/api/import', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ type: 'members', records })
+                              });
+                              const data = await res.json();
+                              if (data.success) {
+                                alert(data.message);
+                                await fetchData();
+                              } else {
+                                alert('Import failed: ' + data.message);
+                              }
+                            } catch (err) {
+                              alert('Network error while importing.');
+                            }
+                          }
+                        };
+                        reader.readAsText(file);
+                      }}
+                      className={`w-full p-2 border rounded-lg ${innerBg} ${textColor}`}
+                    />
+                  </div>
+                </div>
+                </>
               )}
             </div>
           )}
